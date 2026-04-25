@@ -1,0 +1,45 @@
+# Dependencias
+node_modules
+npm-debug.log
+
+# Build
+dist
+build
+
+# Tests
+coverage
+.nyc_output
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# Docs
+*.md
+!README.md
+
+# Logs
+logs
+*.log
+
+# Otros
+.editorconfig
+.prettierrc
+.eslintrc.js
+tsconfig.json
