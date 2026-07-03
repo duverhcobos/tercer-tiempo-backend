@@ -1,4 +1,4 @@
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -10,7 +10,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     }
 
     canActivate(context: ExecutionContext) {
-        // Verificar si la ruta está marcada como pública
         const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
             context.getHandler(),
             context.getClass(),
@@ -21,5 +20,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         }
 
         return super.canActivate(context);
+    }
+
+    handleRequest(err: any, user: any) {
+        if (err || !user) {
+            throw err || new UnauthorizedException('Invalid or missing token');
+        }
+        return user;
     }
 }

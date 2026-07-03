@@ -18,11 +18,15 @@ export class UserRepository implements IUserRepository {
             where: { email },
         });
 
-        if (!userSchema) {
-            return null;
-        }
+        return userSchema ? UserMapper.toDomain(userSchema) : null;
+    }
 
-        return UserMapper.toDomain(userSchema);
+    async findByGoogleId(googleId: string): Promise<User | null> {
+        const userSchema = await this.userSchemaRepository.findOne({
+            where: { googleId },
+        });
+
+        return userSchema ? UserMapper.toDomain(userSchema) : null;
     }
 
     async save(user: User): Promise<User> {

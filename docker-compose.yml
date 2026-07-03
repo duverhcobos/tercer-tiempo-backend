@@ -4,10 +4,10 @@ services:
   # Base de datos PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: nestjs-ddd-starter-db
+    container_name: 3tiempo-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-nestjs_ddd_starter}
+      POSTGRES_DB: ${DB_DATABASE:-3tiempo}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
@@ -15,7 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - nestjs-ddd-starter-network
+      - 3tiempo-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
       interval: 10s
@@ -27,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nestjs-ddd-starter-app
+    container_name: 3tiempo-app
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
@@ -45,7 +45,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - nestjs-ddd-starter-network
+      - 3tiempo-network
     command: sh -c "sleep 5 && node dist/main"
 
 volumes:
@@ -53,5 +53,5 @@ volumes:
     driver: local
 
 networks:
-  nestjs-ddd-starter-network:
+  3tiempo-network:
     driver: bridge

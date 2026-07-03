@@ -2,21 +2,30 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 
 @Entity('users')
 export class UserSchema {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-  @Column({ unique: true })
-  email: string;
+    @Column({ unique: true })
+    email!: string;
 
-  @Column()
-  password: string;
+    @Column({ name: 'password_hash', nullable: true, type: 'varchar' })
+    passwordHash!: string | null;
 
-  @Column({ nullable: true, length: 20 })
-  phone: string;
+    @Column({ name: 'phone_number', nullable: true, length: 20 })
+    phoneNumber!: string;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+    @Column({ name: 'sync_id', type: 'uuid', nullable: true, unique: true })
+    syncId!: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+    @Column({ name: 'google_id', nullable: true, unique: true, type: 'varchar' })
+    googleId!: string | null;
+
+    @Column({ name: 'avatar_url', nullable: true, type: 'text' })
+    avatarUrl!: string | null;
+
+    @CreateDateColumn({ name: 'created_at' })
+    createdAt!: Date;
+
+    @UpdateDateColumn({ name: 'updated_at' })
+    updatedAt!: Date;
 }

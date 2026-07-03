@@ -29,4 +29,16 @@ export class EnvironmentVariables {
     @IsString()
     @IsNotEmpty()
     JWT_EXPIRES_IN: string;
+
+    @IsString()
+    @IsNotEmpty()
+    GOOGLE_CLIENT_ID: string;
+
+    @IsString()
+    @IsNotEmpty()
+    GOOGLE_CLIENT_SECRET: string;
+
+    @IsString()
+    @IsNotEmpty()
+    GOOGLE_CALLBACK_URL: string;
 }

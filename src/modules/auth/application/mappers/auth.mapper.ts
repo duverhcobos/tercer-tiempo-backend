@@ -7,12 +7,13 @@ export class AuthMapper {
      * @param user - Entidad de dominio
      * @param accessToken - Token JWT generado
      */
-    static toAuthResponse(user: User, accessToken: string): AuthResponseDto {
+    static toAuthResponse(user: User, accessToken: string, isNewUser = false): AuthResponseDto {
         return new AuthResponseDto(
             user.id,
             user.email,
             accessToken,
             user.createdAt,
+            isNewUser,
         );
     }
 

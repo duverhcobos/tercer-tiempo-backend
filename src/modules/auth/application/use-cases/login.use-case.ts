@@ -23,7 +23,11 @@ export class LoginUseCase {
             throw new InvalidCredentialsException();
         }
 
-        // Verificar contraseña
+        // Verificar contraseña — usuarios que solo usan Google no tienen password
+        if (!user.password) {
+            throw new InvalidCredentialsException();
+        }
+
         const isPasswordValid = await this.bcryptService.compare(password, user.password);
         if (!isPasswordValid) {
             throw new InvalidCredentialsException();

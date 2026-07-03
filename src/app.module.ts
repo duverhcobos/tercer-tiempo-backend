@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -9,6 +9,7 @@ import { HealthModule } from './infrastructure/health/health.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
+import { JwtAuthGuard } from './modules/auth/presentation/guards/jwt-auth.guard';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import appConfig from './config/app.config';
@@ -38,12 +39,15 @@ import { EnvironmentVariables } from './config/env.validation';
         return validatedConfig;
       },
     }),
-    ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 60 segundos
-        limit: 10, // 10 requests por TTL
-      },
-    ]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ([
+        {
+          ttl: config.get<number>('throttle.ttl')!,
+          limit: config.get<number>('throttle.limit')!,
+        },
+      ]),
+    }),
     LoggerModule,
     DatabaseModule,
     HealthModule,
@@ -59,6 +63,10 @@ import { EnvironmentVariables } from './config/env.validation';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, // protege todas las rutas; usa @Public() para excluir
     },
   ],
 })

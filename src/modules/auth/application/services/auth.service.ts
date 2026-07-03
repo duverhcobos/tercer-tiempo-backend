@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { RegisterUseCase } from '../use-cases/register.use-case';
 import { LoginUseCase } from '../use-cases/login.use-case';
+import { GoogleLoginUseCase, GoogleProfile } from '../use-cases/google-login.use-case';
 import { JwtService } from '../../infrastructure/services/jwt.service';
 import { AuthResponseDto } from '../dtos/auth-response.dto';
 import { RegisterDto } from '../dtos/register.dto';
@@ -12,6 +13,7 @@ export class AuthService {
     constructor(
         private readonly registerUseCase: RegisterUseCase,
         private readonly loginUseCase: LoginUseCase,
+        private readonly googleLoginUseCase: GoogleLoginUseCase,
         private readonly jwtService: JwtService,
     ) { }
 
@@ -42,5 +44,16 @@ export class AuthService {
         });
 
         return AuthMapper.toAuthResponse(user, accessToken);
+    }
+
+    async googleLogin(profile: GoogleProfile): Promise<AuthResponseDto> {
+        const { user, isNewUser } = await this.googleLoginUseCase.execute(profile);
+
+        const accessToken = this.jwtService.generateToken({
+            sub: user.id,
+            email: user.email,
+        });
+
+        return AuthMapper.toAuthResponse(user, accessToken, isNewUser);
     }
 }

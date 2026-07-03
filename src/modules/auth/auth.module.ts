@@ -9,10 +9,12 @@ import { UserRepository } from './infrastructure/repositories/user.repository';
 import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { JwtService } from './infrastructure/services/jwt.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
+import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 
 // Application
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
+import { GoogleLoginUseCase } from './application/use-cases/google-login.use-case';
 import { AuthService } from './application/services/auth.service';
 
 // Presentation
@@ -38,10 +40,12 @@ import { USER_REPOSITORY } from './domain/repositories/user.repository.interface
         BcryptService,
         JwtService,
         JwtStrategy,
+        GoogleStrategy,
 
         // Application
         RegisterUseCase,
         LoginUseCase,
+        GoogleLoginUseCase,
         AuthService,
 
         // Presentation

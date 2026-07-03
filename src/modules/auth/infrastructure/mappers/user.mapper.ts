@@ -9,10 +9,12 @@ export class UserMapper {
         return new User(
             schema.id,
             schema.email,
-            schema.password,
-            schema.phone || null,
+            schema.passwordHash,
+            schema.phoneNumber || null,
             schema.createdAt,
             schema.updatedAt,
+            schema.googleId || null,
+            schema.avatarUrl || null,
         );
     }
 
@@ -28,9 +30,18 @@ export class UserMapper {
         }
 
         schema.email = user.email;
-        schema.password = user.password;
+        schema.passwordHash = user.password;
+
         if (user.phone) {
-            schema.phone = user.phone;
+            schema.phoneNumber = user.phone;
+        }
+
+        if (user.googleId) {
+            schema.googleId = user.googleId;
+        }
+
+        if (user.avatarUrl) {
+            schema.avatarUrl = user.avatarUrl;
         }
 
         return schema;

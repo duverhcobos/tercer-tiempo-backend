@@ -1,0 +1,5 @@
+allowBuilds:
+  '@nestjs/core': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  bcrypt: true

@@ -17,9 +17,9 @@ import * as path from 'path';
                 database: configService.get('DB_DATABASE'),
                 // Auto-discovers all *.schema.ts files under /src
                 entities: [path.join(__dirname, '/../../**/*.schema{.ts,.js}')],
-                migrations: ['dist/infrastructure/database/migrations/*.js'],
+                migrations: ['dist/src/infrastructure/database/migrations/*.js'],
                 migrationsRun: true,
-                synchronize: configService.get('NODE_ENV') === 'development',
+                synchronize: false,
                 logging: configService.get('NODE_ENV') === 'development',
             }),
         }),
