@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import * as path from 'path';
+import * as path from 'node:path';
 
 @Module({
     imports: [
@@ -19,6 +19,10 @@ import * as path from 'path';
                 entities: [path.join(__dirname, '/../../**/*.schema{.ts,.js}')],
                 migrations: ['dist/src/infrastructure/database/migrations/*.js'],
                 migrationsRun: true,
+                // 'each' → cada migración en su propia transacción,
+                // requerido para las que usan transaction = false
+                // (ALTER TYPE ADD VALUE no admite BEGIN/COMMIT).
+                migrationsTransactionMode: 'each',
                 synchronize: false,
                 logging: configService.get('NODE_ENV') === 'development',
             }),

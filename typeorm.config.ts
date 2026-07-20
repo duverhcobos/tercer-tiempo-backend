@@ -16,5 +16,9 @@ export default new DataSource({
     database: configService.get('DB_DATABASE'),
     entities: [UserSchema],
     migrations: ['src/infrastructure/database/migrations/*.ts'],
+    // 'each'  → cada migración corre en su propia transacción.
+    // Necesario para permitir transaction = false en migraciones que
+    // usan ALTER TYPE ADD VALUE (no puede ejecutarse dentro de BEGIN/COMMIT).
+    migrationsTransactionMode: 'each',
     synchronize: false,
 });
