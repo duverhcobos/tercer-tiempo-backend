@@ -2,55 +2,33 @@ import { UserSchema } from '../../../../infrastructure/database/schemas/user.sch
 import { User } from '../../domain/entities/user.entity';
 
 export class UserMapper {
-    /**
-     * Convierte un esquema de TypeORM a una entidad de dominio
-     */
-    static toDomain(schema: UserSchema): User {
-        return new User(
-            schema.id,
-            schema.email,
-            schema.passwordHash,
-            schema.phoneNumber || null,
-            schema.createdAt,
-            schema.updatedAt,
-            schema.googleId || null,
-            schema.avatarUrl || null,
-        );
+  static toDomain(schema: UserSchema): User {
+    return new User(
+      schema.id,
+      schema.email,
+      schema.username,
+      schema.passwordHash,
+      schema.status,
+      schema.createdAt,
+      schema.updatedAt,
+    );
+  }
+
+  static toSchema(user: User): UserSchema {
+    const schema = new UserSchema();
+
+    if (user.id) {
+      schema.id = user.id;
     }
 
-    /**
-     * Convierte una entidad de dominio a un esquema de TypeORM
-     */
-    static toSchema(user: User): UserSchema {
-        const schema = new UserSchema();
+    schema.email = user.email;
+    schema.username = user.username;
+    schema.passwordHash = user.password!;
 
-        // Solo asignar ID si existe (para updates)
-        if (user.id) {
-            schema.id = user.id;
-        }
+    return schema;
+  }
 
-        schema.email = user.email;
-        schema.passwordHash = user.password;
-
-        if (user.phone) {
-            schema.phoneNumber = user.phone;
-        }
-
-        if (user.googleId) {
-            schema.googleId = user.googleId;
-        }
-
-        if (user.avatarUrl) {
-            schema.avatarUrl = user.avatarUrl;
-        }
-
-        return schema;
-    }
-
-    /**
-     * Convierte un array de esquemas a un array de entidades de dominio
-     */
-    static toDomainList(schemas: UserSchema[]): User[] {
-        return schemas.map(schema => this.toDomain(schema));
-    }
+  static toDomainList(schemas: UserSchema[]): User[] {
+    return schemas.map((schema) => this.toDomain(schema));
+  }
 }

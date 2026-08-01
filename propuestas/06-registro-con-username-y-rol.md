@@ -1,6 +1,6 @@
-# Propuesta: Registro con username y rol (Opción A)
+# Propuesta: Registro con username y rol (Fase 1 limpia)
 
-Adapta el endpoint `POST /auth/register` para que reciba `username` y `role` desde el frontend, corrija el campo `username` faltante en la BD, y asigne el rol al usuario en la tabla `user_roles` durante el registro.
+Deshabilita las migraciones de fases futuras para trabajar solo con los campos de la Fase 1. Adapta el endpoint `POST /auth/register` para que reciba `username` y `role`, y asigne el rol en `user_roles`. Elimina de la cadena DDD todos los campos que no existen en la tabla `users` de la Fase 1 (`phone_number`, `google_id`, `avatar_url`).
 
 ---
 
@@ -8,19 +8,54 @@ Adapta el endpoint `POST /auth/register` para que reciba `username` y `role` des
 
 | Archivo | Acción |
 |---------|--------|
-| `src/modules/auth/domain/enums/user-role.enum.ts` | Crear — enum de roles válidos |
-| `src/modules/auth/domain/exceptions/username-already-exists.exception.ts` | Crear — excepción de dominio |
-| `src/modules/auth/domain/entities/user.entity.ts` | Modificar — agregar `username`, `status`, `role` |
-| `src/modules/auth/domain/repositories/user.repository.interface.ts` | Modificar — agregar `findByUsername` y `assignRole` |
-| `src/modules/auth/application/dtos/register.dto.ts` | Modificar — agregar `username` y `role` |
+| `src/infrastructure/database/migrations/future/` | Crear carpeta — mover las 4 migraciones futuras aquí |
+| `src/modules/auth/domain/enums/user-role.enum.ts` | Crear — enum de roles válidos ✓ ya existe |
+| `src/modules/auth/domain/exceptions/username-already-exists.exception.ts` | Crear — excepción de dominio ✓ ya existe |
+| `src/modules/auth/domain/entities/user.entity.ts` | Modificar — Fase 1 only: quitar `phone`, `googleId`, `avatarUrl` |
+| `src/modules/auth/domain/repositories/user.repository.interface.ts` | Modificar — agregar `findByUsername`, `assignRole`; quitar `findByGoogleId` |
+| `src/modules/auth/application/dtos/register.dto.ts` | Modificar — agregar `username`, `role`; quitar `phone` |
 | `src/modules/auth/application/swagger-schemas/register.schema.ts` | Modificar — documentar `username` y `role` |
 | `src/modules/auth/application/use-cases/register.use-case.ts` | Modificar — validar username, asignar rol |
-| `src/modules/auth/application/services/auth.service.ts` | Modificar — pasar DTO completo al use case |
+| `src/modules/auth/application/services/auth.service.ts` | Modificar — solo registro y login (Google OAuth es Fase 2) |
 | `src/modules/auth/application/dtos/auth-response.dto.ts` | Modificar — incluir `username` y `role` en respuesta |
 | `src/modules/auth/application/mappers/auth.mapper.ts` | Modificar — mapear `username` y `role` |
-| `src/infrastructure/database/schemas/user.schema.ts` | Modificar — agregar columnas `username` y `status` |
-| `src/modules/auth/infrastructure/mappers/user.mapper.ts` | Modificar — mapear `username` y `status` |
-| `src/modules/auth/infrastructure/repositories/user.repository.ts` | Modificar — implementar `findByUsername` y `assignRole` |
+| `src/infrastructure/database/schemas/user.schema.ts` | Modificar — Fase 1 only: quitar `phoneNumber`, `googleId`, `avatarUrl` |
+| `src/modules/auth/infrastructure/mappers/user.mapper.ts` | Modificar — Fase 1 only |
+| `src/modules/auth/infrastructure/repositories/user.repository.ts` | Modificar — `findByUsername`, `assignRole`; quitar `findByGoogleId` |
+| `src/modules/auth/presentation/controllers/auth.controller.ts` | Modificar — quitar rutas Google OAuth (Fase 2) |
+
+---
+
+## 0. Deshabilitar migraciones futuras
+
+Mover las 4 migraciones que no corresponden a la Fase 1 a una subcarpeta `future/`. El glob `src/infrastructure/database/migrations/*.ts` en `typeorm.config.ts` no las detectará.
+
+**Comandos PowerShell:**
+
+```powershell
+New-Item -ItemType Directory -Path "src/infrastructure/database/migrations/future"
+Move-Item "src/infrastructure/database/migrations/1751000000000-AddGoogleAuthToUsers.ts"  "src/infrastructure/database/migrations/future/"
+Move-Item "src/infrastructure/database/migrations/1752000000000-AddPhoneAuth.ts"          "src/infrastructure/database/migrations/future/"
+Move-Item "src/infrastructure/database/migrations/1753000000000-AddTwoFactorAuth.ts"      "src/infrastructure/database/migrations/future/"
+Move-Item "src/infrastructure/database/migrations/1754000000000-CreatePlayerProfiles.ts"  "src/infrastructure/database/migrations/future/"
+```
+
+Con esto, solo se ejecuta `1706140000000-CreateUsersTable.ts` y la tabla `users` queda con los campos exactos de la Fase 1:
+
+| Columna | Tipo |
+|---------|------|
+| `id` | UUID PK |
+| `sync_id` | UUID UNIQUE |
+| `email` | VARCHAR(255) |
+| `username` | VARCHAR(50) NOT NULL |
+| `password_hash` | VARCHAR(255) NOT NULL |
+| `status` | user_status DEFAULT 'pending_verification' |
+| `last_login_at` | TIMESTAMP |
+| `created_at` | TIMESTAMP |
+| `updated_at` | TIMESTAMP |
+| `deleted_at` | TIMESTAMP |
+
+> **Nota:** `phone_number`, `google_id`, `avatar_url` y campos 2FA no existen en la Fase 1. Cualquier código que los referencie se elimina en los pasos siguientes.
 
 ---
 
@@ -59,7 +94,7 @@ export class UsernameAlreadyExistsException extends DomainException {
 
 **Ruta:** `src/modules/auth/domain/entities/user.entity.ts`
 
-Agrega `username`, `status` y `role` (opcional, se puebla en registro/consultas que incluyan roles).
+Solo campos de la tabla `users` Fase 1. Se elimina `phone`, `googleId`, `avatarUrl` y `createFromGoogle` (son Fase 2+).
 
 ```typescript
 import { UserRole } from '../enums/user-role.enum';
@@ -70,13 +105,10 @@ export class User {
     public readonly email: string,
     public readonly username: string,
     public readonly password: string | null,
-    public readonly phone: string | null,
     public readonly status: string,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly role: UserRole | null = null,
-    public readonly googleId: string | null = null,
-    public readonly avatarUrl: string | null = null,
   ) {}
 
   static create(
@@ -84,38 +116,16 @@ export class User {
     username: string,
     password: string,
     role: UserRole,
-    phone?: string,
   ): User {
     return new User(
       '',
       email,
       username,
       password,
-      phone ?? null,
       'pending_verification',
       new Date(),
       new Date(),
       role,
-    );
-  }
-
-  static createFromGoogle(
-    email: string,
-    googleId: string,
-    avatarUrl?: string,
-  ): User {
-    return new User(
-      '',
-      email,
-      '',        // username vacío; se completa en onboarding
-      null,
-      null,
-      'pending_verification',
-      new Date(),
-      new Date(),
-      null,
-      googleId,
-      avatarUrl ?? null,
     );
   }
 }
@@ -127,6 +137,8 @@ export class User {
 
 **Ruta:** `src/modules/auth/domain/repositories/user.repository.interface.ts`
 
+Se elimina `findByGoogleId` (Fase 2). Se agregan `findByUsername` y `assignRole`.
+
 ```typescript
 import { User } from '../entities/user.entity';
 import { UserRole } from '../enums/user-role.enum';
@@ -134,7 +146,6 @@ import { UserRole } from '../enums/user-role.enum';
 export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
   findByUsername(username: string): Promise<User | null>;
-  findByGoogleId(googleId: string): Promise<User | null>;
   save(user: User): Promise<User>;
   assignRole(userId: string, role: UserRole): Promise<void>;
 }
@@ -148,12 +159,13 @@ export const USER_REPOSITORY = Symbol('IUserRepository');
 
 **Ruta:** `src/modules/auth/application/dtos/register.dto.ts`
 
+Se elimina `phone` — la columna `phone_number` no existe en la Fase 1.
+
 ```typescript
 import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
   MaxLength,
@@ -185,11 +197,6 @@ export class RegisterDto {
   })
   @IsNotEmpty({ message: 'Role is required' })
   role!: UserRole;
-
-  @IsOptional()
-  @IsString()
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Invalid phone number' })
-  phone?: string;
 }
 ```
 
@@ -200,7 +207,7 @@ export class RegisterDto {
 **Ruta:** `src/modules/auth/application/swagger-schemas/register.schema.ts`
 
 ```typescript
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../../domain/enums/user-role.enum';
 
 export class RegisterSchema {
@@ -232,12 +239,6 @@ export class RegisterSchema {
     example: UserRole.PLAYER,
   })
   role: UserRole;
-
-  @ApiPropertyOptional({
-    description: 'Número de teléfono en formato E.164',
-    example: '+573001234567',
-  })
-  phone?: string;
 }
 ```
 
@@ -263,7 +264,6 @@ interface RegisterCommand {
   username: string;
   password: string;
   role: UserRole;
-  phone?: string;
 }
 
 @Injectable()
@@ -297,25 +297,20 @@ export class RegisterUseCase {
       command.username,
       hashedPassword,
       command.role,
-      command.phone,
     );
 
     const savedUser = await this.userRepository.save(user);
     await this.userRepository.assignRole(savedUser.id, command.role);
 
-    // Retornar usuario con rol para que la capa de aplicación lo incluya en la respuesta
     return new User(
       savedUser.id,
       savedUser.email,
       savedUser.username,
       savedUser.password,
-      savedUser.phone,
       savedUser.status,
       savedUser.createdAt,
       savedUser.updatedAt,
       command.role,
-      savedUser.googleId,
-      savedUser.avatarUrl,
     );
   }
 }
@@ -327,11 +322,12 @@ export class RegisterUseCase {
 
 **Ruta:** `src/modules/auth/application/services/auth.service.ts`
 
+Se elimina `googleLogin` — depende de `google_id` que no existe en Fase 1. Se elimina la importación de `GoogleLoginUseCase`.
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { RegisterUseCase } from '../use-cases/register.use-case';
 import { LoginUseCase } from '../use-cases/login.use-case';
-import { GoogleLoginUseCase, GoogleProfile } from '../use-cases/google-login.use-case';
 import { JwtService } from '../../infrastructure/services/jwt.service';
 import { AuthResponseDto } from '../dtos/auth-response.dto';
 import { RegisterDto } from '../dtos/register.dto';
@@ -343,7 +339,6 @@ export class AuthService {
   constructor(
     private readonly registerUseCase: RegisterUseCase,
     private readonly loginUseCase: LoginUseCase,
-    private readonly googleLoginUseCase: GoogleLoginUseCase,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -353,7 +348,6 @@ export class AuthService {
       username: registerDto.username,
       password: registerDto.password,
       role: registerDto.role,
-      phone: registerDto.phone,
     });
 
     const accessToken = this.jwtService.generateToken({
@@ -376,17 +370,6 @@ export class AuthService {
     });
 
     return AuthMapper.toAuthResponse(user, accessToken);
-  }
-
-  async googleLogin(profile: GoogleProfile): Promise<AuthResponseDto> {
-    const { user, isNewUser } = await this.googleLoginUseCase.execute(profile);
-
-    const accessToken = this.jwtService.generateToken({
-      sub: user.id,
-      email: user.email,
-    });
-
-    return AuthMapper.toAuthResponse(user, accessToken, isNewUser);
   }
 }
 ```
@@ -464,7 +447,7 @@ export class AuthMapper {
 
 **Ruta:** `src/infrastructure/database/schemas/user.schema.ts`
 
-Agrega `username` y `status`. El `status` se almacena como varchar porque TypeORM con enums PostgreSQL personalizados requiere configuración adicional; el tipo real en BD es `user_status`.
+Solo columnas que existen en la Fase 1. Se eliminan `phoneNumber`, `googleId`, `avatarUrl`.
 
 ```typescript
 import {
@@ -480,32 +463,23 @@ export class UserSchema {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'sync_id', type: 'uuid', nullable: true, unique: true })
+  syncId!: string;
+
   @Column({ unique: true })
   email!: string;
 
   @Column({ length: 50, unique: true })
   username!: string;
 
-  @Column({ name: 'password_hash', nullable: true, type: 'varchar' })
-  passwordHash!: string | null;
+  @Column({ name: 'password_hash', type: 'varchar' })
+  passwordHash!: string;
 
-  @Column({ name: 'phone_number', nullable: true, length: 20 })
-  phoneNumber!: string;
-
-  @Column({ name: 'sync_id', type: 'uuid', nullable: true, unique: true })
-  syncId!: string;
-
-  @Column({
-    type: 'varchar',
-    default: 'pending_verification',
-  })
+  @Column({ type: 'varchar', default: 'pending_verification' })
   status!: string;
 
-  @Column({ name: 'google_id', nullable: true, unique: true, type: 'varchar' })
-  googleId!: string | null;
-
-  @Column({ name: 'avatar_url', nullable: true, type: 'text' })
-  avatarUrl!: string | null;
+  @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
+  lastLoginAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
@@ -532,13 +506,9 @@ export class UserMapper {
       schema.email,
       schema.username,
       schema.passwordHash,
-      schema.phoneNumber ?? null,
       schema.status,
       schema.createdAt,
       schema.updatedAt,
-      null,             // role: no se carga desde esta tabla
-      schema.googleId ?? null,
-      schema.avatarUrl ?? null,
     );
   }
 
@@ -551,19 +521,7 @@ export class UserMapper {
 
     schema.email = user.email;
     schema.username = user.username;
-    schema.passwordHash = user.password;
-
-    if (user.phone) {
-      schema.phoneNumber = user.phone;
-    }
-
-    if (user.googleId) {
-      schema.googleId = user.googleId;
-    }
-
-    if (user.avatarUrl) {
-      schema.avatarUrl = user.avatarUrl;
-    }
+    schema.passwordHash = user.password!;
 
     return schema;
   }
@@ -580,7 +538,7 @@ export class UserMapper {
 
 **Ruta:** `src/modules/auth/infrastructure/repositories/user.repository.ts`
 
-Se inyecta `DataSource` para manejar la asignación de roles con una query raw hacia `user_roles`.
+Se elimina `findByGoogleId`. Se agregan `findByUsername` y `assignRole`.
 
 ```typescript
 import { Injectable } from '@nestjs/common';
@@ -615,13 +573,6 @@ export class UserRepository implements IUserRepository {
     return userSchema ? UserMapper.toDomain(userSchema) : null;
   }
 
-  async findByGoogleId(googleId: string): Promise<User | null> {
-    const userSchema = await this.userSchemaRepository.findOne({
-      where: { googleId },
-    });
-    return userSchema ? UserMapper.toDomain(userSchema) : null;
-  }
-
   async save(user: User): Promise<User> {
     const userSchema = UserMapper.toSchema(user);
     const savedSchema = await this.userSchemaRepository.save(userSchema);
@@ -641,10 +592,54 @@ export class UserRepository implements IUserRepository {
 
 ---
 
+## 14. AuthController
+
+**Ruta:** `src/modules/auth/presentation/controllers/auth.controller.ts`
+
+Se eliminan las rutas `GET /auth/google` y `GET /auth/google/callback` — requieren `google_id` (Fase 2). Se eliminan las importaciones de `GoogleAuthGuard` y `Request`/`Response`.
+
+```typescript
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { AuthService } from '../../application/services/auth.service';
+import { RegisterDto } from '../../application/dtos/register.dto';
+import { LoginDto } from '../../application/dtos/login.dto';
+import { AuthResponseDto } from '../../application/dtos/auth-response.dto';
+import { Public } from '../decorators/public.decorator';
+import { ApiRegister, ApiLogin } from '../swagger/auth-controller.swagger';
+
+@ApiTags('auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @ApiRegister()
+  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
+    return this.authService.register(registerDto);
+  }
+
+  @Public()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiLogin()
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
+    return this.authService.login(loginDto);
+  }
+}
+```
+
+---
+
 ## Orden de aplicación
 
-1. Copiar el enum `user-role.enum.ts` (dominio, no tiene dependencias)
-2. Copiar la excepción `username-already-exists.exception.ts`
+1. **Mover migraciones futuras** a `future/` (paso 0 — antes de tocar cualquier código)
+2. Borrar la BD manualmente y ejecutar solo `1706140000000-CreateUsersTable.ts`
 3. Actualizar `user.entity.ts`
 4. Actualizar `user.repository.interface.ts`
 5. Actualizar `user.schema.ts`
@@ -656,5 +651,8 @@ export class UserRepository implements IUserRepository {
 11. Actualizar `auth.mapper.ts`
 12. Actualizar `register.use-case.ts`
 13. Actualizar `auth.service.ts`
+14. Actualizar `auth.controller.ts`
 
-> No se requiere migración: las columnas `username` y `status` ya existen en la BD (migración `1706140000000-CreateUsersTable.ts`). Solo se estaban mapeando incorrectamente en el código.
+> Las migraciones movidas a `future/` se recuperarán cuando se implemente cada fase.
+> El módulo de Google OAuth (`GoogleLoginUseCase`, `GoogleAuthGuard`, `strategies/google.strategy.ts`) puede eliminarse del `auth.module.ts` para evitar errores de inyección de dependencias al arrancar.
+

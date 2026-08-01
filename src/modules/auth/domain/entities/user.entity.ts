@@ -1,36 +1,43 @@
+import { UserRole } from "../enums/user-role.enum";
+
+
+interface CreateUserParams {
+  email: string;
+  username: string;
+  password: string;
+  status: string;
+  role: UserRole;
+}
+
 export class User {
+
     constructor(
         public readonly id: string,
         public readonly email: string,
-        public readonly password: string | null,
-        public readonly phone: string | null,
+        public readonly username: string,
+        public readonly password: string,        
+        public readonly status: string,
         public readonly createdAt: Date,
         public readonly updatedAt: Date,
-        public readonly googleId: string | null = null,
-        public readonly avatarUrl: string | null = null,
-    ) { }
+        public readonly role: UserRole | null = null,
+    ){}
 
-    static create(email: string, password: string, phone?: string): User {
+    static create({
+        email,
+        username,
+        password,
+        status,
+        role
+    }: CreateUserParams): User{
         return new User(
             '',
             email,
+            username,
             password,
-            phone || null,
+            status,
             new Date(),
             new Date(),
-        );
-    }
-
-    static createFromGoogle(email: string, googleId: string, avatarUrl?: string): User {
-        return new User(
-            '',
-            email,
-            null,
-            null,
-            new Date(),
-            new Date(),
-            googleId,
-            avatarUrl || null,
+            role
         );
     }
 }
