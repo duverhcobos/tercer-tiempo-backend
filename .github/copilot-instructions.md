@@ -4,7 +4,7 @@
 
 - **Framework**: NestJS 11 con arquitectura DDD
 - **Base de datos**: PostgreSQL + TypeORM 0.3.29 (migraciones obligatorias)
-- **Package manager**: pnpm (nunca npm ni yarn)
+- **Package manager**: npm (nunca pnpm ni yarn)
 - **Autenticación**: JWT + bcrypt
 - **OS de desarrollo**: Windows / PowerShell
 
