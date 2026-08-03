@@ -1,4 +1,4 @@
-import { DomainException } from "src/common/exceptions/domain.exception";
+import { DomainException } from "../../../../common/exceptions/domain.exception";
 
 
 

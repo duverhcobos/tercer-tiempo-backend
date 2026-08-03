@@ -7,6 +7,7 @@ import { RegisterDto } from '../../application/dtos/register.dto';
 import { AuthResponseDto } from '../../application/dtos/auth-response.dto';
 import { Public } from '../decorators/public.decorator';
 import { LoginDto } from '../../application/dtos/login.dto';
+import { VerifyEmailDto } from '../../application/dtos/verify-email.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -36,8 +37,8 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     // @ApiVerifyEmail()
-    async verifyEmail(@Query('token') token: string): Promise<{ message: string }> {
-        return this.authService.verifyEmail({ token });
+    async verifyEmail(@Query() dto: VerifyEmailDto): Promise<{ message: string }> {
+        return this.authService.verifyEmail(dto);
     }
 
     // Paso 1: redirige al usuario a la pantalla de consent de Google

@@ -23,7 +23,7 @@ import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
 
 // Domain
 import { USER_REPOSITORY } from './domain/repositories/user.repository.interface';
-import { VerificationSchema } from 'src/infrastructure/database/schemas/verification.schema';
+import { VerificationSchema } from '../../infrastructure/database/schemas/verification.schema';
 import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repository.interface';
 import { EMAIL_NOTIFICATION_SERVICE, EmailNotificationService } from './infrastructure/services/email-notification.service';
 import { VerificationRepository } from './infrastructure/repositories/verification.repository';

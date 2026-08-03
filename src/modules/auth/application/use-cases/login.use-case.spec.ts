@@ -1,122 +1,134 @@
-// import { Test, TestingModule } from '@nestjs/testing';
-// import { LoginUseCase } from './login.use-case';
-// import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
-// import { BcryptService } from '../../infrastructure/services/bcrypt.service';
-// import { InvalidCredentialsException } from '../../domain/exceptions/invalid-credentials.exception';
-// import { User } from '../../domain/entities/user.entity';
+import { Test, TestingModule } from '@nestjs/testing';
+import { LoginUseCase } from './login.use-case';
+import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
+import { BcryptService } from '../../infrastructure/services/bcrypt.service';
+import { InvalidCredentialsException } from '../../domain/exceptions/invalid-credentials.exception';
+import { EmailNotVerifiedException } from '../../domain/exceptions/email-not-verified.exception';
+import { AccountSuspendedException } from '../../domain/exceptions/account-suspended.exception';
+import { AccountBannedException } from '../../domain/exceptions/account-banned.exception';
+import { User } from '../../domain/entities/user.entity';
+import { UserRole } from '../../domain/enums/user-role.enum';
 
-// describe('LoginUseCase', () => {
-//     let useCase: LoginUseCase;
-//     let userRepository: jest.Mocked<IUserRepository>;
-//     let bcryptService: jest.Mocked<BcryptService>;
+describe('LoginUseCase', () => {
+    let useCase: LoginUseCase;
+    let userRepository: jest.Mocked<IUserRepository>;
+    let bcryptService: jest.Mocked<BcryptService>;
 
-//     beforeEach(async () => {
-//         const mockUserRepository = {
-//             findByEmail: jest.fn(),
-//             save: jest.fn(),
-//             findById: jest.fn(),
-//         };
+    const COMMAND = {
+        email: 'test@example.com',
+        password: 'Password123!', // NOSONAR: credencial de fixture para tests, no es un secreto real
+    };
+    const HASHED_PASSWORD = 'hashed_password_123';
 
-//         const mockBcryptService = {
-//             hash: jest.fn(),
-//             compare: jest.fn(),
-//         };
+    function buildUser(status: string): User {
+        return new User(
+            '123e4567-e89b-12d3-a456-426614174000',
+            COMMAND.email,
+            'test_user',
+            HASHED_PASSWORD,
+            status,
+            new Date(),
+            new Date(),
+            UserRole.PLAYER,
+        );
+    }
 
-//         const module: TestingModule = await Test.createTestingModule({
-//             providers: [
-//                 LoginUseCase,
-//                 {
-//                     provide: USER_REPOSITORY,
-//                     useValue: mockUserRepository,
-//                 },
-//                 {
-//                     provide: BcryptService,
-//                     useValue: mockBcryptService,
-//                 },
-//             ],
-//         }).compile();
+    beforeEach(async () => {
+        const mockUserRepository = {
+            findByEmail: jest.fn(),
+            findByUsername: jest.fn(),
+            findById: jest.fn(),
+            findByEmailWithRole: jest.fn(),
+            registerWithRole: jest.fn(),
+            updateLastLoginAt: jest.fn(),
+            updateStatus: jest.fn(),
+            hasProfile: jest.fn(),
+        };
 
-//         useCase = module.get<LoginUseCase>(LoginUseCase);
-//         userRepository = module.get(USER_REPOSITORY);
-//         bcryptService = module.get(BcryptService);
-//     });
+        const mockBcryptService = {
+            hash: jest.fn(),
+            compare: jest.fn(),
+        };
 
-//     afterEach(() => {
-//         jest.clearAllMocks();
-//     });
+        const module: TestingModule = await Test.createTestingModule({
+            providers: [
+                LoginUseCase,
+                { provide: USER_REPOSITORY, useValue: mockUserRepository },
+                { provide: BcryptService, useValue: mockBcryptService },
+            ],
+        }).compile();
 
-//     describe('execute', () => {
-//         const validEmail = 'test@example.com';
-//         const validPassword = 'Password123';
-//         const hashedPassword = 'hashed_password_123';
+        useCase = module.get<LoginUseCase>(LoginUseCase);
+        userRepository = module.get(USER_REPOSITORY);
+        bcryptService = module.get(BcryptService);
+    });
 
-//         const mockUser = new User(
-//             '123e4567-e89b-12d3-a456-426614174000',
-//             validEmail,
-//             hashedPassword,
-//             null,
-//             new Date(),
-//             new Date(),
-//         );
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
 
-//         it('should login successfully with valid credentials', async () => {
-//             // Arrange
-//             userRepository.findByEmail.mockResolvedValue(mockUser);
-//             bcryptService.compare.mockResolvedValue(true);
+    describe('execute', () => {
+        it('inicia sesión correctamente con credenciales válidas y cuenta activa', async () => {
+            const activeUser = buildUser('active');
+            userRepository.findByEmailWithRole.mockResolvedValue(activeUser);
+            bcryptService.compare.mockResolvedValue(true);
 
-//             // Act
-//             const result = await useCase.execute(validEmail, validPassword);
+            const result = await useCase.execute(COMMAND);
 
-//             // Assert
-//             expect(userRepository.findByEmail).toHaveBeenCalledWith(validEmail);
-//             expect(bcryptService.compare).toHaveBeenCalledWith(
-//                 validPassword,
-//                 hashedPassword,
-//             );
-//             expect(result).toEqual(mockUser);
-//         });
+            expect(userRepository.findByEmailWithRole).toHaveBeenCalledWith(COMMAND.email);
+            expect(bcryptService.compare).toHaveBeenCalledWith(COMMAND.password, HASHED_PASSWORD);
+            expect(userRepository.updateLastLoginAt).toHaveBeenCalledWith(activeUser.id);
+            expect(result).toEqual(activeUser);
+        });
 
-//         it('should throw InvalidCredentialsException when user does not exist', async () => {
-//             // Arrange
-//             userRepository.findByEmail.mockResolvedValue(null);
+        it('lanza InvalidCredentialsException cuando el usuario no existe', async () => {
+            userRepository.findByEmailWithRole.mockResolvedValue(null);
 
-//             // Act & Assert
-//             await expect(useCase.execute(validEmail, validPassword)).rejects.toThrow(
-//                 InvalidCredentialsException,
-//             );
-//             expect(userRepository.findByEmail).toHaveBeenCalledWith(validEmail);
-//             expect(bcryptService.compare).not.toHaveBeenCalled();
-//         });
+            await expect(useCase.execute(COMMAND)).rejects.toThrow(InvalidCredentialsException);
+            expect(bcryptService.compare).not.toHaveBeenCalled();
+            expect(userRepository.updateLastLoginAt).not.toHaveBeenCalled();
+        });
 
-//         it('should throw InvalidCredentialsException when password is incorrect', async () => {
-//             // Arrange
-//             userRepository.findByEmail.mockResolvedValue(mockUser);
-//             bcryptService.compare.mockResolvedValue(false);
+        it('lanza InvalidCredentialsException cuando el password es incorrecto', async () => {
+            userRepository.findByEmailWithRole.mockResolvedValue(buildUser('active'));
+            bcryptService.compare.mockResolvedValue(false);
 
-//             // Act & Assert
-//             await expect(useCase.execute(validEmail, 'WrongPassword')).rejects.toThrow(
-//                 InvalidCredentialsException,
-//             );
-//             expect(userRepository.findByEmail).toHaveBeenCalledWith(validEmail);
-//             expect(bcryptService.compare).toHaveBeenCalledWith(
-//                 'WrongPassword',
-//                 hashedPassword,
-//             );
-//         });
+            await expect(useCase.execute(COMMAND)).rejects.toThrow(InvalidCredentialsException);
+            expect(userRepository.updateLastLoginAt).not.toHaveBeenCalled();
+        });
 
-//         it('should compare password with hashed password from database', async () => {
-//             // Arrange
-//             userRepository.findByEmail.mockResolvedValue(mockUser);
-//             bcryptService.compare.mockResolvedValue(true);
+        it('lanza EmailNotVerifiedException cuando la cuenta está pending_verification', async () => {
+            userRepository.findByEmailWithRole.mockResolvedValue(buildUser('pending_verification'));
+            bcryptService.compare.mockResolvedValue(true);
 
-//             // Act
-//             await useCase.execute(validEmail, validPassword);
+            await expect(useCase.execute(COMMAND)).rejects.toThrow(EmailNotVerifiedException);
+            expect(userRepository.updateLastLoginAt).not.toHaveBeenCalled();
+        });
 
-//             // Assert
-//             expect(bcryptService.compare).toHaveBeenCalledWith(
-//                 validPassword,
-//                 mockUser.password,
-//             );
-//         });
-//     });
-// });
+        it('lanza AccountSuspendedException cuando la cuenta está suspendida', async () => {
+            userRepository.findByEmailWithRole.mockResolvedValue(buildUser('suspended'));
+            bcryptService.compare.mockResolvedValue(true);
+
+            await expect(useCase.execute(COMMAND)).rejects.toThrow(AccountSuspendedException);
+            expect(userRepository.updateLastLoginAt).not.toHaveBeenCalled();
+        });
+
+        it('lanza AccountBannedException cuando la cuenta está baneada', async () => {
+            userRepository.findByEmailWithRole.mockResolvedValue(buildUser('banned'));
+            bcryptService.compare.mockResolvedValue(true);
+
+            await expect(useCase.execute(COMMAND)).rejects.toThrow(AccountBannedException);
+            expect(userRepository.updateLastLoginAt).not.toHaveBeenCalled();
+        });
+
+        it('compara el password recibido contra el hash guardado del usuario', async () => {
+            const activeUser = buildUser('active');
+            userRepository.findByEmailWithRole.mockResolvedValue(activeUser);
+            bcryptService.compare.mockResolvedValue(true);
+
+            await useCase.execute(COMMAND);
+
+            expect(bcryptService.compare).toHaveBeenCalledWith(COMMAND.password, activeUser.password);
+        });
+    });
+});

@@ -17,6 +17,8 @@ import { App } from 'supertest/types';
 import supertest = require('supertest');
 import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
+import { EMAIL_NOTIFICATION_SERVICE } from '../src/modules/auth/infrastructure/services/email-notification.service';
+import { mockEmailNotificationService } from './mocks/email-notification.service.mock';
 
 const request = (server: App) => supertest(server);
 
@@ -36,7 +38,10 @@ describe('POST /auth/register (e2e)', () => {
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
             imports: [AppModule],
-        }).compile();
+        })
+            .overrideProvider(EMAIL_NOTIFICATION_SERVICE)
+            .useValue(mockEmailNotificationService)
+            .compile();
 
         app = moduleFixture.createNestApplication();
 
@@ -58,12 +63,12 @@ describe('POST /auth/register (e2e)', () => {
     });
 
     beforeEach(async () => {
+        jest.clearAllMocks();
         await dataSource.query('DELETE FROM "user_roles"');
         await dataSource.query('DELETE FROM "verifications"');
         await dataSource.query('DELETE FROM "user_sessions"');
         await dataSource.query('DELETE FROM "users"');
     });
-
     // =========================================================================
     // CATEGORÍA 1 — HAPPY PATH
     // =========================================================================
