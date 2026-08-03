@@ -7,10 +7,11 @@ export class DomainExceptionHandler implements ExceptionHandler {
         return exception instanceof DomainException;
     }
 
-    handle(exception: DomainException): { status: number; message: string } {
+    handle(exception: DomainException): { status: number; message: string; errorCode?: string } {
         return {
             status: exception.httpStatus ?? HttpStatus.BAD_REQUEST,
             message: exception.message,
+            errorCode: exception.errorCode,
         };
     }
 }

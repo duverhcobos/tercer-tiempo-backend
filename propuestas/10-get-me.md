@@ -347,7 +347,7 @@ import { JwtService } from './infrastructure/services/jwt.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import {
     EMAIL_NOTIFICATION_SERVICE,
-    EmailNotificationStubService,
+    EmailNotificationService,
 } from './infrastructure/services/email-notification.service';
 
 import { RegisterUseCase } from './application/use-cases/register.use-case';
@@ -373,7 +373,7 @@ import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repo
     providers: [
         { provide: USER_REPOSITORY, useClass: UserRepository },
         { provide: VERIFICATION_REPOSITORY, useClass: VerificationRepository },
-        { provide: EMAIL_NOTIFICATION_SERVICE, useClass: EmailNotificationStubService },
+        { provide: EMAIL_NOTIFICATION_SERVICE, useClass: EmailNotificationService },
         BcryptService,
         JwtService,
         JwtStrategy,

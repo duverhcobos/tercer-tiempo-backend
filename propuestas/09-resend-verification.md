@@ -11,7 +11,7 @@ Reenvío del token de verificación de email. Invalida tokens anteriores, genera
 | `src/modules/auth/domain/exceptions/email-already-verified.exception.ts` | Crear |
 | `src/modules/auth/application/dtos/resend-verification.dto.ts` | Crear |
 | `src/modules/auth/application/use-cases/resend-verification.use-case.ts` | Crear |
-| `src/modules/auth/infrastructure/services/email-notification.service.ts` | Crear |
+| `src/modules/auth/infrastructure/services/email-notification.service.ts` | Ya creado en propuesta 08 — no recrear |
 | `src/modules/auth/application/services/auth.service.ts` | Actualizar |
 | `src/modules/auth/presentation/controllers/auth.controller.ts` | Actualizar |
 | `src/modules/auth/presentation/swagger/auth-controller.swagger.ts` | Actualizar |
@@ -30,7 +30,7 @@ import { DomainException } from '../../../../common/exceptions/domain.exception'
 
 export class EmailAlreadyVerifiedException extends DomainException {
     constructor() {
-        super('Email address is already verified', 409);
+        super('Email address is already verified', 409, 'EMAIL_ALREADY_VERIFIED');
     }
 }
 ```
@@ -53,43 +53,7 @@ export class ResendVerificationDto {
 
 ---
 
-## 3. email-notification.service.ts
-
-Stub de desarrollo. En producción se reemplaza esta implementación por SendGrid, SES, Resend, etc., sin tocar ninguna otra capa.
-
-**Ruta:** `src/modules/auth/infrastructure/services/email-notification.service.ts`
-
-```typescript
-import { Injectable, Logger } from '@nestjs/common';
-
-export interface VerificationEmailPayload {
-    to: string;
-    token: string;
-    expiresAt: Date;
-}
-
-export const EMAIL_NOTIFICATION_SERVICE = Symbol('IEmailNotificationService');
-
-export interface IEmailNotificationService {
-    sendVerificationEmail(payload: VerificationEmailPayload): Promise<void>;
-}
-
-@Injectable()
-export class EmailNotificationStubService implements IEmailNotificationService {
-    private readonly logger = new Logger(EmailNotificationStubService.name);
-
-    async sendVerificationEmail(payload: VerificationEmailPayload): Promise<void> {
-        // TODO: reemplazar por proveedor real (SendGrid, AWS SES, Resend…)
-        this.logger.log(
-            `[EMAIL STUB] Verification token for ${payload.to}: ${payload.token} (expires: ${payload.expiresAt.toISOString()})`,
-        );
-    }
-}
-```
-
----
-
-## 4. resend-verification.use-case.ts
+## 3. resend-verification.use-case.ts
 
 **Ruta:** `src/modules/auth/application/use-cases/resend-verification.use-case.ts`
 
@@ -368,7 +332,7 @@ import { JwtService } from './infrastructure/services/jwt.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 import {
     EMAIL_NOTIFICATION_SERVICE,
-    EmailNotificationStubService,
+    EmailNotificationService,
 } from './infrastructure/services/email-notification.service';
 
 import { RegisterUseCase } from './application/use-cases/register.use-case';
@@ -393,7 +357,7 @@ import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repo
     providers: [
         { provide: USER_REPOSITORY, useClass: UserRepository },
         { provide: VERIFICATION_REPOSITORY, useClass: VerificationRepository },
-        { provide: EMAIL_NOTIFICATION_SERVICE, useClass: EmailNotificationStubService },
+        { provide: EMAIL_NOTIFICATION_SERVICE, useClass: EmailNotificationService },
         BcryptService,
         JwtService,
         JwtStrategy,

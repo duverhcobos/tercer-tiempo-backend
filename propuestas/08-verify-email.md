@@ -1,6 +1,6 @@
 # Propuesta: POST /auth/verify-email
 
-Implementación de la verificación de email por token. Incluye la actualización del `RegisterUseCase` para que genere y persista el token de verificación al registrar.
+Implementación de la verificación de email por token. Incluye la creación del `EmailNotificationService` (stub reemplazable) y la actualización del `RegisterUseCase` para que genere el token, lo persista **y envíe el correo automáticamente** dentro del mismo endpoint de registro.
 
 ---
 
@@ -13,7 +13,11 @@ Implementación de la verificación de email por token. Incluye la actualizació
 | `src/modules/auth/domain/repositories/verification.repository.interface.ts` | Crear |
 | `src/modules/auth/application/dtos/verify-email.dto.ts` | Crear |
 | `src/modules/auth/application/use-cases/verify-email.use-case.ts` | Crear |
-| `src/modules/auth/application/use-cases/register.use-case.ts` | Actualizar (genera token al registrar) |
+| `src/config/email.config.ts` | Crear |
+| `src/config/env.validation.ts` | Actualizar (agregar RESEND\_API\_KEY, EMAIL\_FROM, APP\_URL) |
+| `src/app.module.ts` | Actualizar (cargar emailConfig) |
+| `src/modules/auth/infrastructure/services/email-notification.service.ts` | Crear (implementación Resend) |
+| `src/modules/auth/application/use-cases/register.use-case.ts` | Actualizar (genera token y envía correo al registrar) |
 | `src/modules/auth/application/services/auth.service.ts` | Actualizar |
 | `src/infrastructure/database/schemas/verification.schema.ts` | Crear |
 | `src/modules/auth/infrastructure/repositories/verification.repository.ts` | Crear |
@@ -34,7 +38,7 @@ import { DomainException } from '../../../../common/exceptions/domain.exception'
 
 export class VerificationTokenInvalidException extends DomainException {
     constructor() {
-        super('Verification token is invalid or has already been used', 400);
+        super('Verification token is invalid or has already been used', 400, 'VERIFICATION_TOKEN_INVALID');
     }
 }
 ```
@@ -50,7 +54,7 @@ import { DomainException } from '../../../../common/exceptions/domain.exception'
 
 export class VerificationTokenExpiredException extends DomainException {
     constructor() {
-        super('Verification token has expired', 400);
+        super('Verification token has expired', 400, 'VERIFICATION_TOKEN_EXPIRED');
     }
 }
 ```
@@ -153,9 +157,168 @@ export class VerifyEmailUseCase {
 
 ---
 
-## 6. register.use-case.ts (actualizado)
+## 6. email.config.ts
 
-Se agrega la generación del token de verificación de email al final del registro.
+**Ruta:** `src/config/email.config.ts`
+
+```typescript
+import { registerAs } from '@nestjs/config';
+
+export default registerAs('email', () => ({
+    resendApiKey: process.env.RESEND_API_KEY!,
+    fromEmail: process.env.EMAIL_FROM ?? 'noreply@3tiempo.com',
+    appUrl: process.env.APP_URL ?? 'http://localhost:3000',
+}));
+```
+
+---
+
+## 6b. env.validation.ts (actualizado)
+
+Agregar las tres variables al final de la clase `EnvironmentVariables`.
+
+**Ruta:** `src/config/env.validation.ts`
+
+```typescript
+// Agregar al final de la clase EnvironmentVariables existente:
+
+    @IsString()
+    @IsNotEmpty()
+    RESEND_API_KEY: string;
+
+    @IsString()
+    @IsNotEmpty()
+    EMAIL_FROM: string;
+
+    @IsString()
+    @IsNotEmpty()
+    APP_URL: string;
+```
+
+---
+
+## 6c. app.module.ts (actualizado — agregar emailConfig)
+
+Solo se agrega `emailConfig` al array `load`.
+
+**Ruta:** `src/app.module.ts`
+
+```typescript
+import emailConfig from './config/email.config';
+// ...resto de imports existentes...
+
+// Dentro de ConfigModule.forRoot:
+load: [databaseConfig, jwtConfig, appConfig, throttleConfig, loggerConfig, emailConfig],
+```
+
+---
+
+## 6d. Variables en .env
+
+Agregar al archivo `.env` del proyecto:
+
+```env
+# Email — Resend
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+EMAIL_FROM=noreply@tudominio.com
+APP_URL=https://tudominio.com
+```
+
+> **Pasos en Resend (resend.com):**
+> 1. Crear cuenta gratuita
+> 2. Settings → Domains → Add Domain → verificar el dominio con DNS
+> 3. API Keys → Create API Key → copiar en `RESEND_API_KEY`
+> 4. El `EMAIL_FROM` debe usar el dominio verificado
+
+---
+
+## 6e. email-notification.service.ts
+
+Implementación real con Resend. Para cambiar de proveedor en el futuro, solo se modifica este archivo.
+
+**Ruta:** `src/modules/auth/infrastructure/services/email-notification.service.ts`
+
+```typescript
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Resend } from 'resend';
+
+export interface VerificationEmailPayload {
+    to: string;
+    token: string;
+    expiresAt: Date;
+}
+
+export const EMAIL_NOTIFICATION_SERVICE = Symbol('IEmailNotificationService');
+
+export interface IEmailNotificationService {
+    sendVerificationEmail(payload: VerificationEmailPayload): Promise<void>;
+}
+
+@Injectable()
+export class EmailNotificationService implements IEmailNotificationService {
+    private readonly resend: Resend;
+    private readonly logger = new Logger(EmailNotificationService.name);
+    private readonly fromEmail: string;
+    private readonly appUrl: string;
+
+    constructor(private readonly configService: ConfigService) {
+        this.resend    = new Resend(this.configService.get<string>('email.resendApiKey')!);
+        this.fromEmail = this.configService.get<string>('email.fromEmail')!;
+        this.appUrl    = this.configService.get<string>('email.appUrl')!;
+    }
+
+    async sendVerificationEmail(payload: VerificationEmailPayload): Promise<void> {
+        const verifyUrl = `${this.appUrl}/auth/verify-email?token=${payload.token}`;
+
+        const { error } = await this.resend.emails.send({
+            from: this.fromEmail,
+            to:   payload.to,
+            subject: 'Verifica tu cuenta en 3TIEMPO',
+            html: `
+                <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+                    <h2 style="color:#1e293b">Bienvenido a 3TIEMPO ⚽</h2>
+                    <p>Haz clic en el botón para verificar tu correo electrónico:</p>
+                    <a href="${verifyUrl}"
+                       style="display:inline-block;padding:12px 24px;background:#2563eb;
+                              color:#fff;text-decoration:none;border-radius:6px;
+                              font-weight:600;margin:16px 0">
+                        Verificar correo
+                    </a>
+                    <p style="color:#64748b;font-size:14px">
+                        O copia este token en la aplicación:
+                    </p>
+                    <code style="display:block;background:#f1f5f9;padding:12px;
+                                 border-radius:6px;font-size:13px;word-break:break-all">
+                        ${payload.token}
+                    </code>
+                    <p style="color:#94a3b8;font-size:12px;margin-top:24px">
+                        Este enlace expira el
+                        ${payload.expiresAt.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'short' })}.
+                        Si no creaste esta cuenta, ignora este correo.
+                    </p>
+                </div>
+            `,
+        });
+
+        if (error) {
+            this.logger.error(
+                `Failed to send verification email to ${payload.to}: ${JSON.stringify(error)}`,
+            );
+            // No lanzamos excepción: el usuario ya fue registrado.
+            // El correo puede reenviarse con POST /auth/resend-verification.
+            return;
+        }
+
+        this.logger.log(`Verification email sent to ${payload.to}`);
+    }
+}
+
+---
+
+## 7. register.use-case.ts (actualizado)
+
+Se agrega la generación del token de verificación y el **envío automático del correo** al final del registro.
 
 **Ruta:** `src/modules/auth/application/use-cases/register.use-case.ts`
 
@@ -176,6 +339,10 @@ import { UsernameAlreadyExistsException } from '../../domain/exceptions/username
 import { Email } from '../../domain/value-objects/email.vo';
 import { Password } from '../../domain/value-objects/password.vo';
 import { BcryptService } from '../../infrastructure/services/bcrypt.service';
+import {
+    EMAIL_NOTIFICATION_SERVICE,
+    IEmailNotificationService,
+} from '../../infrastructure/services/email-notification.service';
 
 @Injectable()
 export class RegisterUseCase {
@@ -183,6 +350,8 @@ export class RegisterUseCase {
         @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
         @Inject(VERIFICATION_REPOSITORY)
         private readonly verificationRepository: IVerificationRepository,
+        @Inject(EMAIL_NOTIFICATION_SERVICE)
+        private readonly emailService: IEmailNotificationService,
         private readonly bcryptService: BcryptService,
     ) {}
 
@@ -225,7 +394,11 @@ export class RegisterUseCase {
             expiresAt,
         });
 
-        // TODO: enviar email con el token (EmailNotificationService — Propuesta 09)
+        await this.emailService.sendVerificationEmail({
+            to: savedUser.email,
+            token,
+            expiresAt,
+        });
 
         return new User(
             savedUser.id,
@@ -243,7 +416,7 @@ export class RegisterUseCase {
 
 ---
 
-## 7. verification.schema.ts
+## 8. verification.schema.ts
 
 **Ruta:** `src/infrastructure/database/schemas/verification.schema.ts`
 
@@ -283,7 +456,7 @@ export class VerificationSchema {
 
 ---
 
-## 8. verification.repository.ts
+## 9. verification.repository.ts
 
 **Ruta:** `src/modules/auth/infrastructure/repositories/verification.repository.ts`
 
@@ -355,7 +528,7 @@ export class VerificationRepository implements IVerificationRepository {
 
 ---
 
-## 9. auth.service.ts (acumulativo)
+## 10. auth.service.ts (acumulativo)
 
 **Ruta:** `src/modules/auth/application/services/auth.service.ts`
 
@@ -410,7 +583,7 @@ export class AuthService {
 
 ---
 
-## 10. auth-controller.swagger.ts (acumulativo)
+## 11. auth-controller.swagger.ts (acumulativo)
 
 **Ruta:** `src/modules/auth/presentation/swagger/auth-controller.swagger.ts`
 
@@ -457,7 +630,7 @@ export function ApiVerifyEmail() {
 
 ---
 
-## 11. auth.controller.ts (acumulativo)
+## 12. auth.controller.ts (acumulativo)
 
 **Ruta:** `src/modules/auth/presentation/controllers/auth.controller.ts`
 
@@ -510,7 +683,7 @@ export class AuthController {
 
 ---
 
-## 12. auth.module.ts (acumulativo)
+## 13. auth.module.ts (acumulativo)
 
 **Ruta:** `src/modules/auth/auth.module.ts`
 
@@ -527,6 +700,10 @@ import { VerificationRepository } from './infrastructure/repositories/verificati
 import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { JwtService } from './infrastructure/services/jwt.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
+import {
+    EMAIL_NOTIFICATION_SERVICE,
+    EmailNotificationService,
+} from './infrastructure/services/email-notification.service';
 
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
@@ -549,6 +726,7 @@ import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repo
     providers: [
         { provide: USER_REPOSITORY, useClass: UserRepository },
         { provide: VERIFICATION_REPOSITORY, useClass: VerificationRepository },
+        { provide: EMAIL_NOTIFICATION_SERVICE, useClass: EmailNotificationService },
         BcryptService,
         JwtService,
         JwtStrategy,
@@ -567,14 +745,21 @@ export class AuthModule {}
 
 ## Orden de aplicación
 
-1. Crear los dos archivos de excepciones (`verification-token-invalid`, `verification-token-expired`)
-2. Crear `verification.repository.interface.ts`
-3. Crear `verify-email.dto.ts`
-4. Crear `verification.schema.ts`
-5. Crear `verification.repository.ts`
-6. Crear `verify-email.use-case.ts`
-7. Actualizar `register.use-case.ts` (agrega generación de token al final)
-8. Actualizar `auth.service.ts`
-9. Actualizar `auth-controller.swagger.ts`
-10. Actualizar `auth.controller.ts`
-11. Actualizar `auth.module.ts`
+0. Instalar Resend: `npm install resend`
+1. Crear cuenta en resend.com, verificar dominio, obtener API key
+2. Agregar `RESEND_API_KEY`, `EMAIL_FROM` y `APP_URL` al `.env`
+3. Crear `src/config/email.config.ts`
+4. Actualizar `src/config/env.validation.ts` (agregar las 3 variables)
+5. Actualizar `src/app.module.ts` (agregar `emailConfig` al array `load`)
+6. Crear los dos archivos de excepciones (`verification-token-invalid`, `verification-token-expired`)
+7. Crear `verification.repository.interface.ts`
+8. Crear `verify-email.dto.ts`
+9. Crear `verification.schema.ts`
+10. Crear `verification.repository.ts`
+11. Crear `verify-email.use-case.ts`
+12. Crear `email-notification.service.ts`
+13. Actualizar `register.use-case.ts` (genera token + envía correo automáticamente)
+14. Actualizar `auth.service.ts`
+15. Actualizar `auth-controller.swagger.ts`
+16. Actualizar `auth.controller.ts`
+17. Actualizar `auth.module.ts`

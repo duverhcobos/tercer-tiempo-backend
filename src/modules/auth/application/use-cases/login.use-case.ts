@@ -1,38 +1,36 @@
-// import { Inject, Injectable } from '@nestjs/common';
-// import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
-// import { User } from '../../domain/entities/user.entity';
-// import { Email } from '../../domain/value-objects/email.vo';
-// import { BcryptService } from '../../infrastructure/services/bcrypt.service';
-// import { InvalidCredentialsException } from '../../domain/exceptions/invalid-credentials.exception';
+import { Inject, Injectable } from "@nestjs/common";
+import { IUserRepository, USER_REPOSITORY } from "../../domain/repositories/user.repository.interface";
+import { BcryptService } from "../../infrastructure/services/bcrypt.service";
+import { User } from "../../domain/entities/user.entity";
+import { InvalidCredentialsException } from "../../domain/exceptions/invalid-credentials.exception";
+import { EmailNotVerifiedException } from "../../domain/exceptions/email-not-verified.exception";
+import { AccountSuspendedException } from "../../domain/exceptions/account-suspended.exception";
+import { AccountBannedException } from "../../domain/exceptions/account-banned.exception";
 
-// @Injectable()
-// export class LoginUseCase {
-//     constructor(
-//         @Inject(USER_REPOSITORY)
-//         private readonly userRepository: IUserRepository,
-//         private readonly bcryptService: BcryptService,
-//     ) { }
 
-//     async execute(email: string, password: string): Promise<User> {
-//         // Validar email
-//         const emailVO = new Email(email);
 
-//         // Buscar usuario
-//         const user = await this.userRepository.findByEmail(emailVO.getValue());
-//         if (!user) {
-//             throw new InvalidCredentialsException();
-//         }
+@Injectable()
+export class LoginUseCase {
+    constructor(
+        @Inject(USER_REPOSITORY) private readonly userRepository: IUserRepository,
+        private readonly bcryptService: BcryptService
+    ) { }
 
-//         // Verificar contraseña — usuarios que solo usan Google no tienen password
-//         if (!user.password) {
-//             throw new InvalidCredentialsException();
-//         }
+    async execute(command: { email: string, password: string }): Promise<User> {
 
-//         const isPasswordValid = await this.bcryptService.compare(password, user.password);
-//         if (!isPasswordValid) {
-//             throw new InvalidCredentialsException();
-//         }
+        const user = await this.userRepository.findByEmailWithRole(command.email);
+        user || (() => { throw new InvalidCredentialsException() })();
 
-//         return user;
-//     }
-// }
+        const isPasswordValid = await this.bcryptService.compare(command.password, user.password);
+        isPasswordValid || (() => { throw new InvalidCredentialsException() })();
+
+        user.status === 'pending_verification' && (() => { throw new EmailNotVerifiedException() })();
+        user.status === 'suspended' && (() => { throw new AccountSuspendedException() })();
+        user.status === 'banned' && (() => { throw new AccountBannedException() })();
+
+        await this.userRepository.updateLastLoginAt(user.id);
+
+        return user;
+    }
+
+}

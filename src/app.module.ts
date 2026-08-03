@@ -18,13 +18,14 @@ import loggerConfig from './config/logger.config';
 import { plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { EnvironmentVariables } from './config/env.validation';
+import emailConfig from './config/email.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
-      load: [databaseConfig, jwtConfig, appConfig, throttleConfig, loggerConfig],
+      load: [databaseConfig, jwtConfig, appConfig, throttleConfig, loggerConfig, emailConfig],
       validate: (config: Record<string, unknown>) => {
         const validatedConfig = plainToClass(EnvironmentVariables, config, {
           enableImplicitConversion: true,
