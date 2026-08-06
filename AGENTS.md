@@ -282,10 +282,13 @@ Cuando se pida implementar una funcionalidad, agregar un módulo, modificar lóg
 
 1. **No edites los archivos fuente directamente**
 2. Crea un archivo markdown en `propuestas/` con el nombre `<numero>-<descripcion>.md`
-3. Incluye el **código completo** de cada archivo afectado (no solo fragmentos)
+3. Código a incluir por archivo, según su estado:
+   - **Archivo nuevo**: incluye el **código completo** del archivo.
+   - **Archivo existente que se actualiza**: incluye **solo el fragmento que cambia** (el bloque de código a modificar), nunca el archivo completo. Da suficiente contexto alrededor (unas pocas líneas antes/después o el nombre del método/bloque) para ubicar dónde aplicar el cambio, usando un formato "Antes / Después" o un diff.
 4. Especifica la **ruta exacta** de cada archivo desde la raíz del proyecto
 5. Si hay migración de base de datos, inclúyela como **primer paso**
-6. Termina con el orden de aplicación recomendado
+6. **No incluyas documentación de Swagger** en la propuesta: omite `application/swagger-schemas/<schema>.schema.ts` y `presentation/swagger/<modulo>-controller.swagger.ts` (crearlos/actualizarlos, y los decoradores `@ApiXxx()` en el controller, quedan fuera del alcance de la propuesta; se agregan en un paso aparte si se pide explícitamente)
+7. Termina con el orden de aplicación recomendado
 
 Excepción: correcciones triviales de un solo archivo (typos, un import faltante) se pueden aplicar directamente.
 
@@ -306,12 +309,26 @@ Descripción breve.
 
 ---
 
-## 1. <Nombre archivo>
+## 1. <Nombre archivo> (archivo nuevo)
 
 **Ruta:** `ruta/completa/archivo.ts`
 
 \`\`\`typescript
 // código completo
+\`\`\`
+
+## 2. <Nombre archivo> (archivo existente — actualización)
+
+**Ruta:** `ruta/completa/archivo.ts`
+
+**Antes:**
+\`\`\`typescript
+// solo el fragmento/método que cambia
+\`\`\`
+
+**Después:**
+\`\`\`typescript
+// el fragmento ya modificado
 \`\`\`
 ```
 
@@ -322,4 +339,4 @@ Descripción breve.
 - DTOs con class-validator, separar siempre swagger-schemas de los DTOs
 - Rate limiting por ruta usando `@Throttle()` decorator
 - Los use-cases reciben un `command` object o parámetros primitivos, nunca el DTO directamente
-- `auth.service.ts` y `auth.controller.ts` se muestran en estado **acumulativo** en cada propuesta
+- `auth.service.ts` y `auth.controller.ts` son archivos existentes: al modificarlos, muestra solo el fragmento (método/import) que cambia en cada propuesta, no el archivo completo

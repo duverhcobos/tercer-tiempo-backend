@@ -1,24 +1,25 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { DatabaseModule } from './infrastructure/database/database.module';
-import { HealthModule } from './infrastructure/health/health.module';
-import { LoggerModule } from './common/logger/logger.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
-import { JwtAuthGuard } from './modules/auth/presentation/guards/jwt-auth.guard';
-import databaseConfig from './config/database.config';
-import jwtConfig from './config/jwt.config';
-import appConfig from './config/app.config';
-import throttleConfig from './config/throttle.config';
-import loggerConfig from './config/logger.config';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { plainToClass } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { EnvironmentVariables } from './config/env.validation';
+
+import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
+import { LoggerModule } from './common/logger/logger.module';
+import appConfig from './config/app.config';
+import databaseConfig from './config/database.config';
 import emailConfig from './config/email.config';
+import { EnvironmentVariables } from './config/env.validation';
+import jwtConfig from './config/jwt.config';
+import loggerConfig from './config/logger.config';
+import throttleConfig from './config/throttle.config';
+import { DatabaseModule } from './infrastructure/database/database.module';
+import { HealthModule } from './infrastructure/health/health.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { JwtAuthGuard } from './modules/auth/presentation/guards/jwt-auth.guard';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [

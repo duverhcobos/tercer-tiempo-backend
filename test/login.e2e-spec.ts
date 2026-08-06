@@ -12,13 +12,15 @@ jest.mock('@nestjs/throttler', () => {
     };
 });
 
-import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import { App } from 'supertest/types';
 import supertest = require('supertest');
-import { AppModule } from '../src/app.module';
 import { DataSource } from 'typeorm';
+
+import { AppModule } from '../src/app.module';
 import { EMAIL_NOTIFICATION_SERVICE } from '../src/modules/auth/infrastructure/services/email-notification.service';
+
 import { mockEmailNotificationService } from './mocks/email-notification.service.mock';
 
 const request = (server: App) => supertest(server);

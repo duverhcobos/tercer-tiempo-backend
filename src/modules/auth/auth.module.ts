@@ -1,33 +1,33 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Infrastructure
 import { UserSchema } from '../../infrastructure/database/schemas/user.schema';
-import { UserRepository } from './infrastructure/repositories/user.repository';
-import { BcryptService } from './infrastructure/services/bcrypt.service';
-import { JwtService } from './infrastructure/services/jwt.service';
-import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
-// import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
+import { VerificationSchema } from '../../infrastructure/database/schemas/verification.schema';
 
+import { AuthService } from './application/services/auth.service';
+import { GetMeUseCase } from './application/use-cases/get-me.use-case';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+// import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 // Application
 import { RegisterUseCase } from './application/use-cases/register.use-case';
-import { LoginUseCase } from './application/use-cases/login.use-case';
-import { AuthService } from './application/services/auth.service';
+import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
+import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+// Domain
+import { USER_REPOSITORY } from './domain/repositories/user.repository.interface';
+import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repository.interface';
+import { UserRepository } from './infrastructure/repositories/user.repository';
+import { VerificationRepository } from './infrastructure/repositories/verification.repository';
+import { BcryptService } from './infrastructure/services/bcrypt.service';
+import { EMAIL_NOTIFICATION_SERVICE, EmailNotificationService } from './infrastructure/services/email-notification.service';
+import { JwtService } from './infrastructure/services/jwt.service';
+import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 // import { GoogleLoginUseCase } from './application/use-cases/google-login.use-case';
-
 // Presentation
 import { AuthController } from './presentation/controllers/auth.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
-
-// Domain
-import { USER_REPOSITORY } from './domain/repositories/user.repository.interface';
-import { VerificationSchema } from '../../infrastructure/database/schemas/verification.schema';
-import { VERIFICATION_REPOSITORY } from './domain/repositories/verification.repository.interface';
-import { EMAIL_NOTIFICATION_SERVICE, EmailNotificationService } from './infrastructure/services/email-notification.service';
-import { VerificationRepository } from './infrastructure/repositories/verification.repository';
-import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
 
 @Module({
     imports: [
@@ -53,6 +53,8 @@ import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-cas
         RegisterUseCase,
         LoginUseCase,
         VerifyEmailUseCase,
+        ResendVerificationUseCase,
+        GetMeUseCase,
         // GoogleLoginUseCase,
         AuthService,
 
