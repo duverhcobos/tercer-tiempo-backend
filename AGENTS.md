@@ -146,34 +146,53 @@ Cada módulo bajo `src/modules/<nombre>/` sigue esta estructura completa:
 
 ## Checklist de archivos para un endpoint nuevo
 
-Al agregar un endpoint en un módulo existente o nuevo, estos son los archivos involucrados en orden de creación:
+El orden de creación **no sigue las capas de DDD** (domain → application → infrastructure → presentation); sigue el orden en el que un desarrollador escribiría el código: empieza por el controlador y va creando cada dependencia en el momento exacto en que el código la referencia — no cuando "le toca por capa". Swagger queda excluido (ver regla en "Flujo de trabajo: propuestas de código").
 
-### 1. Dominio (si hay entidad o excepción nueva)
-- [ ] `domain/exceptions/<nombre>.exception.ts`
-- [ ] `domain/entities/<entidad>.entity.ts` *(si entidad nueva)*
-- [ ] `domain/repositories/<entidad>.repository.interface.ts` *(si entidad nueva)*
+**Un archivo no se escribe completo la primera vez que se crea.** Se crea vacío o con solo la firma en el momento en que otro archivo lo necesita para compilar (ej. un tipo en el constructor), y se completa después, cuando el desarrollador vuelve a él porque ya tiene lo que le faltaba (ej. el DTO que le pasa a su método). Por eso el mismo archivo puede aparecer dos veces en el checklist: una vez al crearse (stub) y otra al completarse.
 
-### 2. Infraestructura compartida (si tabla nueva)
-- [ ] `src/infrastructure/database/schemas/<entidad>.schema.ts`
-- [ ] `src/infrastructure/database/migrations/<timestamp>-<Descripcion>.ts`
+Ejemplo de orden real para un controller con `constructor(private readonly xService: XService) {}` seguido de un método:
 
-### 3. Aplicación
+### 1. Controlador — clase + constructor
+- [ ] `presentation/controllers/<modulo>.controller.ts` *(crear)* — `@Controller()`, constructor con el service inyectado. El método del endpoint puede quedar sin escribir todavía.
+
+### 2. Service — stub, porque el constructor del controller ya lo necesita
+- [ ] `application/services/<modulo>.service.ts` *(crear, vacío o sin el método nuevo todavía)* — se crea aquí, **antes que los DTOs**, porque el constructor referencia el tipo `XService` antes de que el método del controller referencie ningún DTO
+
+### 3. DTOs que el método del controller necesita para tipar `@Body()`/`@Query()`/el retorno
 - [ ] `application/dtos/<accion>.dto.ts`
-- [ ] `application/dtos/<respuesta>-response.dto.ts` *(si respuesta nueva)*
-- [ ] `application/swagger-schemas/<schema>.schema.ts`
+- [ ] `application/dtos/<respuesta>-response.dto.ts` *(si la respuesta es nueva)*
+
+### 4. Controlador — se completa el método del endpoint
+- [ ] `presentation/controllers/<modulo>.controller.ts` *(actualizar)* — ahora que existen los DTOs, se escribe la firma completa del método y su cuerpo, que llama a un método del service que aún no existe
+
+### 5. Service — se completa con el método que el controller ya invoca
+- [ ] `application/services/<modulo>.service.ts` *(actualizar)* — agrega el método, delega a un use-case que aún no existe
+
+### 6. Use-case — la lógica de negocio del endpoint
 - [ ] `application/use-cases/<accion>.use-case.ts`
-- [ ] `application/services/<modulo>.service.ts` *(actualizar)*
 
-### 4. Infraestructura del módulo
-- [ ] `infrastructure/repositories/<entidad>.repository.ts` *(actualizar o crear)*
-- [ ] `infrastructure/services/<servicio>.service.ts` *(si servicio externo nuevo)*
+### 7. Dominio — lo que el use-case necesita para expresar sus reglas
+- [ ] `domain/exceptions/<nombre>.exception.ts` *(una por cada excepción que el use-case lanza)*
+- [ ] `domain/entities/<entidad>.entity.ts` *(si el use-case opera sobre una entidad nueva)*
+- [ ] `domain/value-objects/<vo>.vo.ts` *(si aplica)*
+- [ ] `domain/repositories/<entidad>.repository.interface.ts` *(si el use-case necesita persistencia nueva: define la interfaz + token; la implementación viene después)*
 
-### 5. Presentación
-- [ ] `presentation/swagger/<modulo>-controller.swagger.ts` *(actualizar)*
-- [ ] `presentation/controllers/<modulo>.controller.ts` *(actualizar)*
+### 8. Persistencia — solo si el repositorio requiere tabla/columna nueva
+- [ ] `src/infrastructure/database/migrations/<timestamp>-<Descripcion>.ts`
+- [ ] `src/infrastructure/database/schemas/<entidad>.schema.ts`
 
-### 6. Módulo
-- [ ] `<nombre>.module.ts` *(actualizar providers/imports)*
+### 9. Infraestructura — implementa lo que el dominio dejó como interfaz
+- [ ] `infrastructure/repositories/<entidad>.repository.ts` *(implements IXxxRepository)*
+- [ ] `infrastructure/mappers/<entidad>.mapper.ts` *(domain ↔ schema, si el repositorio lo necesita)*
+- [ ] `infrastructure/services/<servicio>.service.ts` *(si el use-case depende de un servicio externo nuevo: bcrypt, email, etc.)*
+
+### 10. Mapper de aplicación — obligatorio si el use-case retorna una entidad de dominio y la respuesta es un DTO
+- [ ] `application/mappers/<entidad>.mapper.ts` *(domain entity → response DTO; ver "Regla estricta de capas": el use-case nunca construye el DTO directamente)*
+
+### 11. Módulo — conecta todas las piezas (siempre el último paso)
+- [ ] `<nombre>.module.ts` *(actualizar providers/imports: token del repositorio, use-case, servicios)*
+
+**Nota:** si el `service`, `use-case`, etc. ya existen (endpoint agregado a un módulo existente), no hay stub que crear — se salta directo al paso de "actualizar". Los pasos de stub (2) y completar (4, 5) solo aplican cuando el archivo es nuevo.
 
 ---
 
@@ -282,13 +301,16 @@ Cuando se pida implementar una funcionalidad, agregar un módulo, modificar lóg
 
 1. **No edites los archivos fuente directamente**
 2. Crea un archivo markdown en `propuestas/` con el nombre `<numero>-<descripcion>.md`
-3. Código a incluir por archivo, según su estado:
-   - **Archivo nuevo**: incluye el **código completo** del archivo.
-   - **Archivo existente que se actualiza**: incluye **solo el fragmento que cambia** (el bloque de código a modificar), nunca el archivo completo. Da suficiente contexto alrededor (unas pocas líneas antes/después o el nombre del método/bloque) para ubicar dónde aplicar el cambio, usando un formato "Antes / Después" o un diff.
-4. Especifica la **ruta exacta** de cada archivo desde la raíz del proyecto
-5. Si hay migración de base de datos, inclúyela como **primer paso**
-6. **No incluyas documentación de Swagger** en la propuesta: omite `application/swagger-schemas/<schema>.schema.ts` y `presentation/swagger/<modulo>-controller.swagger.ts` (crearlos/actualizarlos, y los decoradores `@ApiXxx()` en el controller, quedan fuera del alcance de la propuesta; se agregan en un paso aparte si se pide explícitamente)
-7. Termina con el orden de aplicación recomendado
+3. **Ordena los archivos como los escribiría un desarrollador, no por capa DDD**: empieza por el controlador (clase + constructor) y ve creando/actualizando cada archivo justo en el momento en que el código que se está escribiendo lo referencia — incluyendo volver a un archivo ya creado para completarlo cuando antes solo hacía falta su tipo (ver "Checklist de archivos para un endpoint nuevo" para el orden completo y el ejemplo de stub → completar).
+4. Código a incluir por archivo, según su estado en **ese paso**:
+   - **Se crea por primera vez (stub)**: incluye solo lo que existe en ese momento (ej. la clase con el constructor, sin el método todavía). No inventes código que el desarrollador no habría escrito aún.
+   - **Se completa un archivo creado como stub en un paso anterior**: trátalo igual que una actualización — muestra solo el fragmento que se agrega (Antes/Después), no el archivo completo otra vez.
+   - **Archivo nuevo que se escribe completo de una sola vez** (no necesita un paso de stub previo): incluye el **código completo**.
+   - **Archivo existente del proyecto que se actualiza**: incluye **solo el fragmento que cambia** (el bloque de código a modificar), nunca el archivo completo. Da suficiente contexto alrededor (unas pocas líneas antes/después o el nombre del método/bloque) para ubicar dónde aplicar el cambio, usando un formato "Antes / Después" o un diff.
+5. Especifica la **ruta exacta** de cada archivo desde la raíz del proyecto
+6. Si hay migración de base de datos, inclúyela en el paso de persistencia del orden anterior (junto al schema), no como primer paso del documento
+7. **No incluyas documentación de Swagger** en la propuesta: omite `application/swagger-schemas/<schema>.schema.ts` y `presentation/swagger/<modulo>-controller.swagger.ts` (crearlos/actualizarlos, y los decoradores `@ApiXxx()` en el controller, quedan fuera del alcance de la propuesta; se agregan en un paso aparte si se pide explícitamente)
+8. Termina con el orden de aplicación recomendado (debe coincidir con el orden en que se presentaron los archivos, incluyendo los pasos de "completar" un stub)
 
 Excepción: correcciones triviales de un solo archivo (typos, un import faltante) se pueden aplicar directamente.
 
@@ -340,3 +362,15 @@ Descripción breve.
 - Rate limiting por ruta usando `@Throttle()` decorator
 - Los use-cases reciben un `command` object o parámetros primitivos, nunca el DTO directamente
 - `auth.service.ts` y `auth.controller.ts` son archivos existentes: al modificarlos, muestra solo el fragmento (método/import) que cambia en cada propuesta, no el archivo completo
+
+---
+
+## Regla estricta de capas (sin atajos)
+
+La arquitectura DDD (`domain/ → application/ → infrastructure/ → presentation/`) se sigue **siempre**, sin excepciones por simplicidad. En particular:
+
+- **Los use-cases devuelven entidades de dominio** (o primitivos/estructuras internas), **nunca construyen el DTO de respuesta directamente**. Aunque el use-case sea simple y "total" el mapeo sea trivial, la transformación no le corresponde a él.
+- **La transformación domain entity → response DTO siempre pasa por un mapper de aplicación** (`application/mappers/<entidad>.mapper.ts`), invocado desde el `service` — igual patrón que `AuthMapper.toAuthResponse` en `auth.service.ts`. El paso 10 del checklist ("Mapper de aplicación") **no es opcional** cuando el use-case retorna una entidad de dominio y el endpoint responde con un DTO: es obligatorio, no "solo si el service lo necesita".
+- El `service` es quien orquesta: llama al use-case (obtiene la entidad) y al mapper (obtiene el DTO); nunca hace lógica de negocio ni accede a repositorios directamente.
+- No se salta una capa "porque total el archivo iba a quedar casi vacío" (ej. un mapper con un solo método `toResponseDto`). Si la capa existe en la estructura del módulo, el archivo se crea.
+- Si una propuesta anterior no siguió esta regla (ej. un use-case que arma el DTO él mismo), al tocar ese código en una propuesta nueva se corrige para introducir el mapper de aplicación faltante.
