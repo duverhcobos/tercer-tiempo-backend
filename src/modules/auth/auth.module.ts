@@ -10,7 +10,6 @@ import { VerificationSchema } from '../../infrastructure/database/schemas/verifi
 import { AuthService } from './application/services/auth.service';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { LoginUseCase } from './application/use-cases/login.use-case';
-// import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
 // Application
 import { RegisterUseCase } from './application/use-cases/register.use-case';
 import { ResendVerificationUseCase } from './application/use-cases/resend-verification.use-case';
@@ -24,7 +23,6 @@ import { BcryptService } from './infrastructure/services/bcrypt.service';
 import { EMAIL_NOTIFICATION_SERVICE, EmailNotificationService } from './infrastructure/services/email-notification.service';
 import { JwtService } from './infrastructure/services/jwt.service';
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
-// import { GoogleLoginUseCase } from './application/use-cases/google-login.use-case';
 // Presentation
 import { AuthController } from './presentation/controllers/auth.controller';
 import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
@@ -47,7 +45,6 @@ import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
         BcryptService,
         JwtService,
         JwtStrategy,
-        // GoogleStrategy,
 
         // Application
         RegisterUseCase,
@@ -55,7 +52,6 @@ import { JwtAuthGuard } from './presentation/guards/jwt-auth.guard';
         VerifyEmailUseCase,
         ResendVerificationUseCase,
         GetMeUseCase,
-        // GoogleLoginUseCase,
         AuthService,
 
         // Presentation

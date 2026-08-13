@@ -57,3 +57,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Google OAuth credentials
 client_secret*.json
+
+# Este proyecto usa npm exclusivamente (ver AGENTS.md).
+# Se ignoran lockfiles de otros gestores para evitar que se generen/comiteen por error.
+pnpm-lock.yaml
+pnpm-workspace.yaml
+yarn.lock

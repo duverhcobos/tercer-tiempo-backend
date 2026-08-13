@@ -1,7 +1,8 @@
-import * as crypto from 'crypto';
+import * as crypto from 'node:crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
 
+import { EmailAlreadyVerifiedException } from '../../domain/exceptions/email-already-verified.exception';
 import { IUserRepository, USER_REPOSITORY } from '../../domain/repositories/user.repository.interface';
 import {
     IVerificationRepository,
@@ -11,7 +12,6 @@ import {
     EMAIL_NOTIFICATION_SERVICE,
     IEmailNotificationService,
 } from '../../infrastructure/services/email-notification.service';
-import { EmailAlreadyVerifiedException } from '../../domain/exceptions/email-already-verified.exception';
 
 @Injectable()
 export class ResendVerificationUseCase {
