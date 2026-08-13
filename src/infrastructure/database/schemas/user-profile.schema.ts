@@ -14,16 +14,16 @@ export class UserProfileSchema {
     @Column({ name: 'first_name_1', length: 50 })
     firstName1!: string;
 
-    @Column({ name: 'first_name_2', length: 50, type: 'varchar', nullable: true })
+    @Column({ name: 'first_name_2', type: 'varchar', length: 50, nullable: true })
     firstName2!: string | null;
 
     @Column({ name: 'last_name_1', length: 50 })
     lastName1!: string;
 
-    @Column({ name: 'last_name_2', length: 50, type: 'varchar', nullable: true })
+    @Column({ name: 'last_name_2', type: 'varchar', length: 50, nullable: true })
     lastName2!: string | null;
 
-    @Column({ name: 'avatar_file_id', length: 255, type: 'varchar', nullable: true })
+    @Column({ name: 'avatar_file_id', type: 'varchar', length: 255, nullable: true })
     avatarFileId!: string | null;
 
     @Column({ name: 'birth_date', type: 'date' })
@@ -32,7 +32,7 @@ export class UserProfileSchema {
     @Column({ type: 'varchar', length: 10 })
     gender!: string;
 
-    @Column({ name: 'country_id', length: 2, type: 'varchar', nullable: true })
+    @Column({ name: 'country_id', type: 'varchar', length: 2, nullable: true })
     countryId!: string | null;
 
     @Column({ length: 50, default: 'UTC' })

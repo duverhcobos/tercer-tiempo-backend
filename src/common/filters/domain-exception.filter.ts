@@ -30,9 +30,9 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
         const handler = this.handlers.find((h) => h.canHandle(exception));
 
-        const { status, message } = handler
+        const { status, message, errorCode } = handler
             ? handler.handle(exception)
-            : { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Internal server error' };
+            : { status: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Internal server error', errorCode: undefined };
 
         const logMessage = `${request.method} ${request.url} - ${status} ${JSON.stringify(message)}`;
 
@@ -44,6 +44,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
 
         response.status(status).json({
             statusCode: status,
+            ...(errorCode !== undefined && { errorCode }),
             message,
             timestamp: new Date().toISOString(),
         });

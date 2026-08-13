@@ -20,6 +20,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/presentation/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { AppService } from './app.service';
     DatabaseModule,
     HealthModule,
     AuthModule,
+    UsersModule
   ],
   controllers: [AppController],
   providers: [
