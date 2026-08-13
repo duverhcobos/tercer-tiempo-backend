@@ -314,6 +314,15 @@ Cuando se pida implementar una funcionalidad, agregar un módulo, modificar lóg
 
 Excepción: correcciones triviales de un solo archivo (typos, un import faltante) se pueden aplicar directamente.
 
+## Checklist de seguridad: IDOR (Insecure Direct Object Reference)
+
+Al diseñar o revisar **cualquier propuesta** de un endpoint nuevo (o que modifique uno existente) que reciba un identificador de recurso — en la URL (`:id`), en query params, o en el body — evaluar explícitamente el riesgo de IDOR:
+
+- **¿El identificador viene del token (JWT) o del request del cliente?** Si el recurso pertenece al usuario autenticado, el `userId`/`ownerId` debe extraerse siempre de `@CurrentUser()`, nunca de `:id`, query o body. Si el body incluye un campo así, debe quedar rechazado por el DTO (`whitelist` + `forbidNonWhitelisted`), nunca simplemente ignorado en silencio.
+- **¿El endpoint referencia un recurso de OTRO usuario/entidad?** (ej. `GET /orders/:id`, `PATCH /teams/:id`). El use-case debe verificar que el recurso encontrado pertenezca al usuario autenticado (o que su rol lo autorice) antes de devolver/modificar datos — no basta con `findById`, hace falta `findById` + validación de ownership, y lanzar una excepción de dominio (403/404) si no coincide.
+- **Documentar en la propuesta** qué capa hace esa verificación (normalmente el use-case, ver patrón de `GetMeUseCase`/`CreateProfileUseCase` validando existencia y pertenencia antes de actuar).
+- **Agregar el caso de ataque al `.e2e-spec.ts` correspondiente**: un usuario A intentando leer/modificar/crear un recurso usando el `id` de un usuario B, autenticado con el token de A.
+
 ## Formato de propuesta
 
 ```markdown

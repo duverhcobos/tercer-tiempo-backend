@@ -438,4 +438,148 @@ describe('POST /users/profile (e2e) — seguridad / ataques', () => {
                 .expect(400);
         });
     });
+
+    // =========================================================
+    // 6. VALIDACIONES DE CAMPOS INDIVIDUALES
+    // =========================================================
+
+    describe('Validaciones de campos individuales', () => {
+        it('400 — falta solo firstName1', async () => {
+            const { accessToken } = await registerUser();
+            const { firstName1, ...rest } = validPayload();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(rest)
+                .expect(400);
+        });
+
+        it('400 — falta solo lastName1', async () => {
+            const { accessToken } = await registerUser();
+            const { lastName1, ...rest } = validPayload();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(rest)
+                .expect(400);
+        });
+
+        it('400 — falta solo birthDate', async () => {
+            const { accessToken } = await registerUser();
+            const { birthDate, ...rest } = validPayload();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(rest)
+                .expect(400);
+        });
+
+        it('400 — falta solo gender', async () => {
+            const { accessToken } = await registerUser();
+            const { gender, ...rest } = validPayload();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(rest)
+                .expect(400);
+        });
+
+        it('400 — firstName1 string vacío (distinto de ausente)', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ firstName1: '' }))
+                .expect(400);
+        });
+
+        it('400 — firstName1 solo espacios en blanco (trim antes de validar)', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ firstName1: '   ' }))
+                .expect(400);
+        });
+
+        it('400 — campo opcional firstName2 enviado como string vacío', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ firstName2: '' }))
+                .expect(400);
+        });
+
+        it('400 — countryId con formato alpha-3 en vez de alpha-2', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ countryId: 'COL' }))
+                .expect(400);
+        });
+
+        it('400 — timezone sin formato Región/Ciudad', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ timezone: 'Bogota' }))
+                .expect(400);
+        });
+
+        it('400 — locale fuera de la whitelist permitida', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ locale: 'it' }))
+                .expect(400);
+        });
+
+        it('400 — gender con case distinto (minúscula)', async () => {
+            const { accessToken } = await registerUser();
+
+            await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ gender: 'm' }))
+                .expect(400);
+        });
+
+        it('201 — campo opcional en null explícito usa el valor por defecto', async () => {
+            const { accessToken } = await registerUser();
+
+            const res = await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ timezone: null }))
+                .expect(201);
+
+            expect(res.body.timezone).toBe('UTC');
+        });
+
+        it('201 — espacios al inicio/fin se recortan (trim)', async () => {
+            const { accessToken } = await registerUser();
+
+            const res = await request(app.getHttpServer())
+                .post('/users/profile')
+                .set(authHeader(accessToken))
+                .send(validPayload({ firstName1: '  Duver  ' }))
+                .expect(201);
+
+            expect(res.body.firstName1).toBe('Duver');
+        });
+    });
 });
