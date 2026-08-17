@@ -1,5 +1,7 @@
 # Propuesta: GET /auth/me
 
+**Estado:** ✅ Completado — superada en el orden de aplicación por `10.2-get-me.md` (misma funcionalidad, orden de archivos actualizado), pero el resultado final ya está en `src/`.
+
 Estado actual del usuario autenticado. Devuelve `status` y `profileComplete` para que el frontend sepa en qué paso del flujo de registro está el usuario al abrir la app.
 
 ---

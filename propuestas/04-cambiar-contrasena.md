@@ -1,5 +1,7 @@
 # Propuesta: Endpoint cambiar contraseña (protegido con JWT)
 
+**Estado:** 🗑️ Obsoleta — reemplazada por `23-cambiar-contrasena.md` (referencia una forma antigua de `User`/`IUserRepository` que ya no existe). No aplicar; candidata a eliminar del directorio.
+
 Agrega el endpoint `PATCH /auth/change-password` que requiere autenticación JWT. El usuario debe enviar su contraseña actual y la nueva. Sigue la arquitectura DDD existente: nuevo use-case, nuevo DTO, nueva excepción de dominio, extensión del repositorio y del servicio.
 
 ---

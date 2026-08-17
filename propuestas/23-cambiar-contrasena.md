@@ -1,5 +1,7 @@
 # Propuesta: Cambiar contraseña autenticado (PATCH /auth/change-password)
 
+**Estado:** ⭕ Pendiente — `PATCH /auth/change-password` no existe en `src/`. Reemplaza a `04-cambiar-contrasena.md` (obsoleta).
+
 Agrega `PATCH /auth/change-password`, protegido por JWT (sin `@Public()`): el usuario ya autenticado envía su contraseña actual + la nueva, y la use-case valida la actual contra el hash guardado antes de reemplazarla. Es el complemento de `19-recuperacion-contrasena.md` (que cubre "olvidé mi contraseña" sin sesión activa); aquí el usuario ya tiene sesión y solo quiere cambiarla voluntariamente.
 
 ## Reemplaza a `propuestas/04-cambiar-contrasena.md`

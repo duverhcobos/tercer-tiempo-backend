@@ -1,5 +1,7 @@
 # Propuesta: Recuperación de contraseña (POST /auth/forgot-password + POST /auth/reset-password)
 
+**Estado:** ⭕ Pendiente — sin `forgot-password`/`reset-password` en `src/`.
+
 Habilita el flujo de "olvidé mi contraseña" para usuarios que no pueden iniciar sesión: `POST /auth/forgot-password` genera un token de un solo uso (tipo `password_reset`, ya soportado por el enum `verification_type` desde la migración de Fase 1) y lo envía por email; `POST /auth/reset-password` consume ese token y establece la nueva contraseña. Ambos endpoints son públicos y siguen el mismo patrón de no-enumeración de emails que `09-resend-verification.md`.
 
 Reutiliza la tabla `verifications` (sin migración nueva) y las excepciones de token ya existentes (`VerificationTokenInvalidException`, `VerificationTokenExpiredException`), creadas en `08-verify-email.md`.

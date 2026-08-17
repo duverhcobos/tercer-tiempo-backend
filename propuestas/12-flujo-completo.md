@@ -1,5 +1,7 @@
 # Propuesta: Flujo completo de registro — Fase 1
 
+**Estado:** ✅ Completado — documento de referencia; todos los endpoints que describe (07-11) ya están implementados en `src/`.
+
 Descripción del flujo de navegación completo desde el frontend, incluyendo todos los endpoints, transiciones de estado y casos de reanudación cuando el usuario abandona el proceso a medias.
 
 ---

@@ -1,5 +1,7 @@
 # Propuesta: Agregar errorCode a respuestas de error de dominio
 
+**Estado:** ✅ Completado — `DomainException` tiene `errorCode` y las excepciones existentes (ej. `EmailNotVerifiedException`) ya lo usan.
+
 El frontend necesita un campo estable para distinguir tipos de error del mismo HTTP status code (p.ej. dos errores 403 distintos). Se agrega `errorCode` en formato `SCREAMING_SNAKE_CASE` a todas las respuestas de error de dominio.
 
 **Antes:**

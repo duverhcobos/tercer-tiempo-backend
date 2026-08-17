@@ -1,5 +1,7 @@
 # Propuesta: Auditoría de seguridad básica (`security_audit_logs`)
 
+**Estado:** ⭕ Pendiente — tabla `security_audit_logs` existe en BD pero nada en `src/` escribe en ella.
+
 Habilita el uso real de `security_audit_logs` (creada e indexada desde la migración de Fase 1 — incluye el índice GIN sobre `metadata` — pero sin ningún código que escriba en ella). Se agrega un `IAuditLogRepository` que `LoginUseCase` invoca para registrar `login_success`/`login_failed` en cada intento de inicio de sesión, distinguiendo el motivo del fallo en `metadata` (JSONB).
 
 > **Dependencia:** Ninguna. Es independiente de `19-recuperacion-contrasena.md`, `20-gestion-sesiones-multidispositivo.md` y `21-rbac-permisos-granulares.md`.

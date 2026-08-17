@@ -1,5 +1,7 @@
 # Propuesta: Unificar el gestor de paquetes en npm (eliminar rastros de pnpm)
 
+**Estado:** 🟡 Parcial — `pnpm-lock.yaml`/`pnpm-workspace.yaml` ya se eliminaron de la raíz, pero el `Dockerfile` **no se actualizó** (sigue usando `corepack prepare pnpm` y `pnpm install --frozen-lockfile`, lo que hoy rompe el build sin el lockfile). Falta una propuesta de seguimiento para el `Dockerfile`.
+
 ## Problema
 
 El proyecto usa NestJS + npm de forma explícita (ver `AGENTS.md`: *"Package manager: npm (nunca pnpm ni yarn)"*), y `package-lock.json` está presente y versionado. Sin embargo, el repositorio también contiene:

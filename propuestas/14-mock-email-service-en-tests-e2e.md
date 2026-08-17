@@ -1,5 +1,7 @@
 # Propuesta: Mockear EmailNotificationService en la suite e2e
 
+**Estado:** ✅ Completado — los 6 `test/*.e2e-spec.ts` usan `overrideProvider(EMAIL_NOTIFICATION_SERVICE)` con `test/mocks/email-notification.service.mock.ts`.
+
 ## Problema
 
 Las suites `test/auth.e2e-spec.ts` y `test/login.e2e-spec.ts` ejecutan `POST /auth/register` en sus bloques `beforeEach`/tests, lo que dispara `RegisterUseCase` → `EmailNotificationService.sendVerificationEmail()` → una llamada **real** a la API de Resend.

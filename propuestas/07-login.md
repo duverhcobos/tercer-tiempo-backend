@@ -1,5 +1,7 @@
 # Propuesta: POST /auth/login
 
+**Estado:** ✅ Completado — `LoginUseCase` y endpoint implementados en `src/`.
+
 Implementación del endpoint de inicio de sesión con validación de credenciales, verificación de estado de cuenta y generación de JWT.
 
 ---

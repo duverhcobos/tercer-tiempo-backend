@@ -1,5 +1,7 @@
 # Propuesta: Agregar campos restantes a tabla users
 
+**Estado:** ✅ Completado — columnas presentes en la migración `1706140000000-CreateUsersTable.ts`.
+
 Migración que agrega los 14 campos faltantes para completar el esquema de la tabla `users`.
 
 ---

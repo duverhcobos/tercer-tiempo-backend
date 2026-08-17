@@ -1,5 +1,7 @@
 # Propuesta: POST /users/profile (Onboarding)
 
+**Estado:** ✅ Completado — superada en el orden de aplicación por `11.2-onboarding-profile.md`/`11.3-onboarding-profile.md` (misma funcionalidad, orden y capas refinados), pero el resultado final ya está en `src/`.
+
 Creación del módulo `users` con el endpoint de onboarding. El usuario autenticado, que ya tiene email verificado, completa su perfil con nombre, apellidos, fecha de nacimiento y género.
 
 ---

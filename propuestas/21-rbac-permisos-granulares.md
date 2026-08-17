@@ -1,5 +1,7 @@
 # Propuesta: RBAC con permisos granulares (`permissions` + `role_permissions`)
 
+**Estado:** ⭕ Pendiente — tablas `permissions`/`role_permissions` sembradas pero sin guard/decorador en `src/` que las consulte.
+
 Habilita el uso real de `permissions` y `role_permissions` (creadas y sembradas desde la migración de Fase 1 — `manage_users`, `create_tournament`, `report_match` — pero sin ningún código que las consulte hoy). El proyecto hoy solo verifica el **rol crudo** del usuario (`user.role`); esta propuesta agrega verificación de **permisos** granulares por rol, vía:
 
 - Un claim `role` en el JWT (hoy el payload solo lleva `sub`/`email`).

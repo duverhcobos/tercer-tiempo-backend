@@ -1,5 +1,7 @@
 # Propuesta: POST /auth/resend-verification
 
+**Estado:** ✅ Completado — `ResendVerificationUseCase` y endpoint implementados en `src/`.
+
 Reenvío del token de verificación de email. Invalida tokens anteriores, genera uno nuevo e integra un `EmailNotificationService` stub para el envío del correo (reemplazable por un proveedor real sin tocar el dominio).
 
 ---

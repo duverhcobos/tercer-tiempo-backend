@@ -1,5 +1,7 @@
 # Propuesta: Remover placeholders de Google OAuth comentados (código muerto)
 
+**Estado:** 🟡 Parcial — `auth.module.ts` quedó limpio tal cual el diff propuesto, pero quedaron rastros que esta propuesta no cubría: `google-auth.guard.ts` (100% comentado) sigue existiendo, y `auth.controller.ts` conserva ~19 líneas comentadas de rutas Google. Falta una propuesta de seguimiento para terminar la limpieza.
+
 ## Problema
 
 El análisis estructural del código (grafo de dependencias) detectó dos archivos cuyo contenido está **100% comentado**, sin ninguna línea de código real:

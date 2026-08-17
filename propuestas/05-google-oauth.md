@@ -1,5 +1,7 @@
 # Propuesta: Autenticación con Google OAuth 2.0
 
+**Estado:** ⭕ Pendiente — no implementada. Es la referencia de diseño que quedó vigente tras limpiar el código muerto en `17-remover-codigo-muerto-google-oauth.md`.
+
 Implementa login con Google usando `passport-google-oauth20`. El flujo es:
 1. El usuario va a `GET /auth/google` → es redirigido a la pantalla de Google.
 2. Google regresa a `GET /auth/google/callback` con el perfil del usuario.

@@ -1,5 +1,7 @@
 # Propuesta: Registro con username y rol (Fase 1 limpia)
 
+**Estado:** ✅ Completado — `RegisterUseCase` recibe `username` y `role`, asigna en `user_roles`.
+
 Deshabilita las migraciones de fases futuras para trabajar solo con los campos de la Fase 1. Adapta el endpoint `POST /auth/register` para que reciba `username` y `role`, y asigne el rol en `user_roles`. Elimina de la cadena DDD todos los campos que no existen en la tabla `users` de la Fase 1 (`phone_number`, `google_id`, `avatar_url`).
 
 ---

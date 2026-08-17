@@ -1,5 +1,7 @@
 # Propuesta: Registro de Usuario Completo
 
+**Estado:** ✅ Completado — `RegisterUseCase` y `POST /auth/register` implementados en `src/`.
+
 Adaptar el módulo de auth para que la tabla `users` y el endpoint `POST /auth/register`
 sean acordes al esquema SQL del proyecto 3TIEMPO.
 

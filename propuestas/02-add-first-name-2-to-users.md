@@ -1,5 +1,7 @@
 # Propuesta: Agregar columna first_name_2 a users
 
+**Estado:** ✅ Completado — columna presente en la migración `1706140000000-CreateUsersTable.ts`.
+
 Agrega el campo `first_name_2` (segundo nombre, opcional) a la tabla `users` mediante una migración de TypeORM.
 
 ---

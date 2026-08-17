@@ -1,5 +1,7 @@
 # Propuesta: Aplicar validación real al endpoint POST /auth/verify-email
 
+**Estado:** ✅ Completado — `auth.controller.ts` usa `@Query() dto: VerifyEmailDto`.
+
 ## Problema
 
 `AuthController.verifyEmail` recibe el token directamente con `@Query('token') token: string`, ignorando el DTO `VerifyEmailDto` que ya existe con las validaciones correctas:

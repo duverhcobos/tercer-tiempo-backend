@@ -1,5 +1,7 @@
 # Propuesta: Gestión de sesiones multi-dispositivo (refresh tokens + user_sessions)
 
+**Estado:** ⭕ Pendiente — tabla `user_sessions` existe en BD pero sin ningún código en `src/` que la use.
+
 Habilita el uso real de la tabla `user_sessions` (creada desde la migración de Fase 1, hoy sin ningún código que la use). `register` y `login` pasan a emitir, además del `accessToken` (JWT de corta vida), un `refreshToken` opaco de un solo uso que se persiste **hasheado con SHA-256** en `user_sessions` junto con metadata del dispositivo (ip, user-agent, nombre de dispositivo). Se agregan 4 endpoints nuevos:
 
 | Método | Ruta | Auth | Propósito |

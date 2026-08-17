@@ -1,5 +1,7 @@
 # Propuesta: POST /auth/verify-email
 
+**Estado:** ✅ Completado — `VerifyEmailUseCase` y endpoint implementados en `src/` (validación de DTO corregida además por `15-fix-verify-email-dto-validation.md`).
+
 Implementación de la verificación de email por token. Incluye la creación del `EmailNotificationService` (stub reemplazable) y la actualización del `RegisterUseCase` para que genere el token, lo persista **y envíe el correo automáticamente** dentro del mismo endpoint de registro.
 
 ---

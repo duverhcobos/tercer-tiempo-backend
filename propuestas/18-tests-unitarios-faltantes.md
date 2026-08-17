@@ -1,5 +1,7 @@
 # Propuesta: Completar tests unitarios faltantes (get-me, resend-verification, email-notification)
 
+**Estado:** ✅ Completado — `get-me.use-case.spec.ts`, `resend-verification.use-case.spec.ts` y `email-notification.service.spec.ts` existen en `src/`.
+
 ## Problema
 
 Según el checklist de pruebas unitarias definido en `AGENTS.md` (*"SIEMPRE requieren `.spec.ts`"*), todo `use-case` y todo `service` de infraestructura con lógica propia debe tener su spec junto al archivo. Al auditar el proyecto contra esa regla, tres archivos con lógica de negocio real no tienen `.spec.ts`:
