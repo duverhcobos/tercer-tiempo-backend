@@ -1,6 +1,6 @@
 # Propuesta: Autenticación con Google OAuth 2.0
 
-**Estado:** ⭕ Pendiente — no implementada. Es la referencia de diseño que quedó vigente tras limpiar el código muerto en `17-remover-codigo-muerto-google-oauth.md`.
+**Estado:** 🗑️ Obsoleta — reemplazada por `29-oauth-social-infraestructura-base.md` y las propuestas que la siguen (30-33). Este documento usa un constructor de `User` desactualizado (`phone`/`googleId` en vez de `username`/`status`/`role`), columnas `google_id`/`avatar_url` directas en `users` en vez de la tabla genérica `user_social_identities`, `pnpm`, e incluye Swagger (excluido por la regla vigente). No aplicar; se conserva como referencia histórica del flujo de Google Cloud Console (pasos 1-6), que sigue siendo válido.
 
 Implementa login con Google usando `passport-google-oauth20`. El flujo es:
 1. El usuario va a `GET /auth/google` → es redirigido a la pantalla de Google.

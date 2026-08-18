@@ -7,6 +7,7 @@ El detalle de convenciones, arquitectura y workflows de este proyecto vive en sk
 - **Package manager: npm** — nunca pnpm ni yarn.
 - **Nunca editar archivos fuente directamente** para implementar funcionalidad o lógica de negocio: ver skill `propuesta-workflow` antes de escribir/modificar código (excepción: correcciones triviales de un solo archivo).
 - **OS de desarrollo**: Windows / PowerShell.
+- **Producto: MVP para app móvil Android.** Sin frontend web planeado. Toda sugerencia, propuesta o construcción se evalúa contra qué necesita el MVP — ver skill `mvp-android-scope` **siempre**, no solo cuando se pregunte explícitamente por prioridades.
 
 ## Índice de skills
 
@@ -25,5 +26,6 @@ El detalle de convenciones, arquitectura y workflows de este proyecto vive en sk
 | `propuesta-workflow` | **Siempre** que se vaya a proponer un cambio de código — formato y reglas del archivo en `propuestas/` |
 | `idor-checklist` | Al diseñar/revisar un endpoint que recibe un identificador de recurso |
 | `token-saving-tools-policy` | Al explorar el código — cuándo leer directo vs. usar el grafo codebase-memory |
+| `mvp-android-scope` | **Siempre** — el producto es Android-only y todo se evalúa contra el MVP, no contra la cobertura ideal del schema |
 
 Si una instrucción parece faltar acá, buscarla primero en `.devin/skills/` antes de asumir que no existe.
